@@ -3,7 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-import { GameRooms } from "./rooms/GameRooms.js";
+import GameRooms from "./rooms/GameRooms.js";
 
 // __dirname тохируулах
 const __filename = fileURLToPath(import.meta.url);
