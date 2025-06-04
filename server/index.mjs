@@ -7,6 +7,7 @@ import { customAlphabet } from "nanoid";
 import GameRoom from "./rooms/GameRooms.js";
 
 const app = express();
+app.use(express.static(path.join(__dirname, "public")));
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
@@ -61,6 +62,7 @@ io.on("connection", (socket) => {
       const result = {
         pieces: room.gameLogic.pieces,
         currentTurn: room.gameLogic.currentTurn,
+        movablePieces: room.gameLogic.movablePieces,
       };
       room.players.forEach((playerId) => {
         const color = room.getPlayerColor(playerId); // ⬅️ өнгө
@@ -69,6 +71,7 @@ io.on("connection", (socket) => {
           color,
           pieces: result.pieces,
           currentTurn: result.currentTurn,
+          movablePieces: result.movablePieces,
         });
       });
     }
@@ -80,7 +83,8 @@ io.on("connection", (socket) => {
     if (!room) return;
     const result = {
       pieces: room.gameLogic.pieces,
-      currentTurn: room.gameLogic.currentTurn,
+      currentTurn: room.currentTurn,
+      movablePieces: room.gameLogic.currentMovablePieces,
     };
     socket.emit("updateBoard", result);
   });
@@ -123,6 +127,7 @@ io.on("connection", (socket) => {
         io.to(id).emit("updateBoard", {
           pieces: result.pieces,
           currentTurn: result.currentTurn,
+          movablePieces: room.gameLogic.currentMovablePieces, // ✨ нэмэлт
         });
       }
     }
@@ -162,6 +167,12 @@ io.on("connection", (socket) => {
       }
     }
     console.log(`🔌 Client disconnected: ${socket.id}`);
+  });
+
+  // Ялагч тодроход
+  socket.on("gameOver", ({ roomCode, winner }) => {
+    console.log("Ялагчийг хүлээж авав", winner);
+    io.to(roomCode).emit("gameEnded", { winner });
   });
 });
 

@@ -1,11 +1,12 @@
 // server/game/GameLogic.js
 export default class GameLogic {
-  constructor(board) {
+  constructor(board, onGameOver) {
     this.board = board;
     this.pieces = [];
     this.selectedPieces = null;
     this.currentValidMoves = null;
-    this.currentTurn = 1; // 0 = хар, 1 = цагаан
+    this.currentMovablePieces = [];
+    this.onGameOver = onGameOver;
   }
 
   createInitialPieces() {
@@ -24,6 +25,7 @@ export default class GameLogic {
         }
       }
     }
+    this.updateMovablePieces(1);
   }
 
   createPiece(col, row, color) {
@@ -42,8 +44,8 @@ export default class GameLogic {
     return this.pieces.find((p) => p.row === row && p.col === col);
   }
 
-  movePieceTo(pieceData, newRow, newCol) {
-    const mustCapture = this.hasAnyCaptureMoves(this.currentTurn);
+  movePieceTo(pieceData, newRow, newCol, currentTurn) {
+    const mustCapture = this.hasAnyCaptureMoves(currentTurn);
     const move = this.getValidMoves(pieceData).find(
       (m) => m.row === newRow && m.col === newCol
     );
@@ -77,6 +79,7 @@ export default class GameLogic {
       if (furtherMoves.length > 0) {
         this.selectedPieces = pieceData;
         this.currentValidMoves = furtherMoves;
+        this.updateMovablePieces(currentTurn);
         return; // ⚠️ Ээлж шилжүүлэхгүй
       }
     } else {
@@ -91,11 +94,19 @@ export default class GameLogic {
       ) {
         pieceData.isKing = true;
       }
-      // 🌀 Ээлжийг солих
-      this.selectedPieces = null;
-      this.currentValidMoves = null;
-      this.currentTurn = this.currentTurn === 0 ? 1 : 0;
     }
+    if (this.checkGameOver(1 - currentTurn)) {
+      if (this.onGameOver) {
+        this.onGameOver(currentTurn); // 🎯 GameRoom руу мэдэгдэнэ
+      }
+
+      return;
+    }
+
+    // 🌀 Ээлжийг солих
+    this.selectedPieces = null;
+    this.currentValidMoves = null;
+    this.updateMovablePieces(1 - currentTurn);
   }
 
   getPiecesWithCaptureMoves(color) {
@@ -106,6 +117,7 @@ export default class GameLogic {
 
   getValidMoves(pieceData) {
     const moves = [];
+    const captureMoves = [];
 
     const captureDirections = [
       [1, -1],
@@ -115,7 +127,6 @@ export default class GameLogic {
     ];
 
     if (pieceData.isKing) {
-      // KING: бүх чиглэлд урт нүүдэл болон идэлт
       for (const [dr, dc] of captureDirections) {
         let row = pieceData.row + dr;
         let col = pieceData.col + dc;
@@ -133,7 +144,7 @@ export default class GameLogic {
             hasCaptured = true;
           } else if (hasCaptured && !other) {
             // идэлтийн дараах зайтай талбай
-            moves.push({ row, col, captured });
+            captureMoves.push({ row, col, captured });
           } else {
             break;
           }
@@ -142,7 +153,6 @@ export default class GameLogic {
         }
       }
     } else {
-      // Энгийн хүү: зөвхөн урагш чиглэлд нүүдэл
       const moveDirections =
         pieceData.color === 0
           ? [
@@ -154,6 +164,7 @@ export default class GameLogic {
               [-1, 1],
             ];
 
+      // Энгийн нүүдэлүүд
       for (const [dr, dc] of moveDirections) {
         const newRow = pieceData.row + dr;
         const newCol = pieceData.col + dc;
@@ -166,6 +177,7 @@ export default class GameLogic {
         }
       }
 
+      // Идэх нүүдэлүүд
       for (const [dr, dc] of captureDirections) {
         const newRow = pieceData.row + dr;
         const newCol = pieceData.col + dc;
@@ -179,13 +191,18 @@ export default class GameLogic {
           this.board.isValidTile(jumpRow, jumpCol) &&
           !this.getPieceAt(jumpRow, jumpCol)
         ) {
-          moves.push({
+          captureMoves.push({
             row: jumpRow,
             col: jumpCol,
             captured: enemy,
           });
         }
       }
+    }
+
+    // Хэрэв идэх нүүдэл байгаа бол зөвхөн идэх нүүдлийг буцаах
+    if (captureMoves.length > 0) {
+      return captureMoves;
     }
 
     return moves;
@@ -197,5 +214,30 @@ export default class GameLogic {
         piece.color === playerColor &&
         this.getValidMoves(piece).some((move) => move.captured)
     );
+  }
+
+  // Тухайн ээлжинд нүүх боломжтой хүүнүүдийг шинэчлэнэ
+  updateMovablePieces(playerColor) {
+    const hasCapture = this.hasAnyCaptureMoves(playerColor);
+    if (hasCapture) {
+      this.currentMovablePieces = this.getPiecesWithCaptureMoves(playerColor);
+    } else {
+      this.currentMovablePieces = this.pieces.filter(
+        (p) => p.color === playerColor && this.getValidMoves(p).length > 0
+      );
+    }
+  }
+  checkGameOver(currentTurn) {
+    const playerPieces = this.pieces.filter((p) => p.color === currentTurn);
+    if (playerPieces.length === 0) {
+      return true;
+    }
+    for (const piece of playerPieces) {
+      const moves = this.getValidMoves(piece);
+      if (moves.length > 0) {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -54,18 +54,22 @@ export default class GameScene extends Phaser.Scene {
         }
       });
     this.socket.emit("requestBoardState", this.roomCode);
-    this.socket.on("roomJoined", ({ roomCode, color, pieces, currentTurn }) => {
-      this.roomCode = roomCode;
-      this.playerColor = color;
-      this.pieces.updateBoardFromServer(pieces, currentTurn); // ← заавал энэ байх ёстой
-    });
+
     this.socket.off("updateBoard"); // өмнөх бүртгэлийг устгах
 
     this.socket.on("updateBoard", (data) => {
-      console.log("Шинэчлэгдсэн хүүнүүд:", data.pieces);
       this.currentTurn = data.currentTurn;
-      this.pieces.updateBoardFromServer(data.pieces, data.currentTurn);
+      this.pieces.updateBoardFromServer(
+        data.pieces,
+        data.currentTurn,
+        data.movablePieces
+      );
+      console.log(data.currentTurn);
     });
     this.board.setPlayerColor(this.playerColor); // 0 эсвэл 1
+
+    this.socket.on("gameEnded", ({ winner }) => {
+      this.scene.start("LobbyScene", { winner });
+    });
   }
 }

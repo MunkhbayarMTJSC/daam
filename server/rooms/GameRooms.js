@@ -11,6 +11,9 @@ export default class GameRooms {
     this.gameLogic.createInitialPieces();
     this.currentTurn = 1;
     this.playerColors = {};
+    const logic = new GameLogic(this.board, (winner) => {
+      io.to(roomCode).emit("gameEnded", { winner });
+    });
   }
   addPlayer(socketId) {
     if (this.players.length >= 2) return false;
@@ -57,7 +60,12 @@ export default class GameRooms {
     }
 
     // Чулууг хөдөлгөнө (устгах логик дотор нь байгаа)
-    this.gameLogic.movePieceTo(piece, moveData.toRow, moveData.toCol);
+    this.gameLogic.movePieceTo(
+      piece,
+      moveData.toRow,
+      moveData.toCol,
+      this.currentTurn
+    );
 
     // Дараагийн идэлт байгаа эсэхийг шалгаад ээлжийг солих
     if (!this.gameLogic.currentValidMoves) {
