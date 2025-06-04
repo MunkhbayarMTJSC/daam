@@ -3,7 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-import { GameRoom } from "./rooms/GameRooms.js";
+import { GameRooms } from "./rooms/GameRooms.js";
 
 // __dirname тохируулах
 const __filename = fileURLToPath(import.meta.url);
@@ -46,7 +46,7 @@ io.on("connection", (socket) => {
       //roomCode = nanoid();
     } while (rooms[roomCode]);
 
-    const room = new GameRoom(roomCode);
+    const room = new GameRooms(roomCode);
     room.addPlayer(socket.id);
     rooms[roomCode] = room;
     socket.join(roomCode);
