@@ -193,7 +193,3 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("gameEnded", { winner });
   });
 });
-
-server.listen(3000, () => {
-  console.log("🚀 Server listening on http://localhost:3000");
-});
