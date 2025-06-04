@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
 import GameRooms from "./rooms/GameRooms.js";
+import { customAlphabet } from "nanoid";
 
 // __dirname тохируулах
 const __filename = fileURLToPath(import.meta.url);
