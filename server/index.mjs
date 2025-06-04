@@ -1,36 +1,38 @@
-// server/index.mjs
-
-// index.mjs
-
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// __dirname тохируулах
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files
-app.use(express.static(path.join(__dirname, "public")));
-
-// ...таны бусад Socket.IO логик энд байна...
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
-});
-
+// ⬇️ Express app үүсгэх
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
-const server = createServer(app);
+
+// ⬇️ HTTP server + Socket.IO
+const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
   },
 });
 
+// ⬇️ Rooms хадгалах
 const rooms = {}; // { roomCode: GameRoom instance }
+
+// ⬇️ Socket.IO логик (танай одоогийн логик энэ хэсэгт)
+io.on("connection", (socket) => {
+  // ... бүх listener-ууд энд ...
+});
+
+// ⬇️ Server эхлүүлэх
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`🚀 Server listening on http://localhost:${PORT}`);
+});
 
 io.on("connection", (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
