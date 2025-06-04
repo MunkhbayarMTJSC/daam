@@ -1,47 +1,77 @@
-import GameLogic from "../game/GameLogic";
-import Board from "../game/Board";
+// server/rooms/GameRooms.js
+import GameLogic from "../game/GameLogic.js";
+import Board from "../game/Board.js";
 
-class GameRooms {
+export default class GameRooms {
   constructor(roomCode) {
     this.roomCode = roomCode;
-    this.player = [];
-    this.gameLogic = new GameLogic();
-    this.gameLogic.createInitialePieces();
-    this.currentTurn = 2;
+    this.players = [];
+    this.board = new Board();
+    this.gameLogic = new GameLogic(this.board);
+    this.gameLogic.createInitialPieces();
+    this.currentTurn = 1;
+    this.playerColors = {};
   }
   addPlayer(socketId) {
-    if (this.player.length < 2) {
-      this.player.push(socketId);
-      return true;
-    }
+    if (this.players.length >= 2) return false;
+
+    this.players.push(socketId);
+
+    // ☑️ Шууд өнгө оноох
+    const color = this.players.length === 1 ? 0 : 1; // Эхний хүн бол цагаан (1), дараагийнх нь хар (0)
+    this.playerColors[socketId] = color;
+
     return true;
   }
-  isPlayerTurn(socketId) {
-    return (this.player[this.currentTurn] = socketId);
+
+  removePlayer(socketId) {
+    const idx = this.players.indexOf(socketId);
+    if (idx !== -1) {
+      this.players.splice(idx, 1);
+    }
   }
-  handleMove(socketId, moveData) {
-    if (!this.isPlayerTurn(socketId)) return { error: "Таны ээлж биш!!!" };
+
+  isPlayerTurn(socketId) {
+    return this.players[this.currentTurn] === socketId;
+  }
+  handleMove(socketId, pieceData, moveData) {
+    if (!this.isPlayerTurn(socketId)) {
+      return { error: "Таны ээлж биш!!!" };
+    }
+
     const piece = this.gameLogic.getPieceAt(
-      moveData.from.row,
-      moveData.from.col
+      pieceData.fromRow,
+      pieceData.fromCol
     );
+    if (!piece) {
+      return { error: "Нүүдэл хийх чулуу олдсонгүй!" };
+    }
+
     const validMoves = this.gameLogic.getValidMoves(piece);
     const selectedMove = validMoves.find(
-      (m) => m.row === moveData.to.row && m.col === moveData.to.col
+      (m) => m.row === moveData.toRow && m.col === moveData.toCol
     );
-    if (!selectedMove) return { error: "Буруу нүүдэл!" };
-    if (selectedMove.captured) {
-      const cap = selectedMove.captured;
-      this.gameLogic.pieces = this.gameLogic.pieces.filter((p) => p !== cap);
-      this.gameLogic.movePieceTo(piece, moveData.to.row, moveData.to.col);
+
+    if (!selectedMove) {
+      return { error: "Буруу нүүдэл!" };
+    }
+
+    // Чулууг хөдөлгөнө (устгах логик дотор нь байгаа)
+    this.gameLogic.movePieceTo(piece, moveData.toRow, moveData.toCol);
+
+    // Дараагийн идэлт байгаа эсэхийг шалгаад ээлжийг солих
+    if (!this.gameLogic.currentValidMoves) {
       this.currentTurn = 1 - this.currentTurn;
     }
-    // ✨ Илгээж буй эвэнт
+
     return {
       pieces: this.gameLogic.pieces,
       currentTurn: this.currentTurn,
+      chaining: this.gameLogic.currentValidMoves !== null,
     };
   }
-}
 
-module.exports = GameRooms;
+  getPlayerColor(socketId) {
+    return this.playerColors[socketId] ?? null;
+  }
+}

@@ -33,56 +33,59 @@ export default class LobbyScene extends Phaser.Scene {
           дарвал автоматаар эхлэнэ.`,
       { fontSize: "18px", fill: "#fff" }
     );
-    const codeInput = document.createElement("input");
-    codeInput.type = "text";
-    codeInput.placeholder = "e.g. A1B2C3";
+    this.codeInput = document.createElement("input");
+    this.codeInput.type = "text";
+    this.codeInput.placeholder = "e.g. A1B2C3";
 
     // Загварын тохиргоо
-    codeInput.style.position = "absolute";
-    codeInput.style.left = "380px";
-    codeInput.style.top = "300px";
-    codeInput.style.width = "160px";
-    codeInput.style.height = "32px";
-    codeInput.style.backgroundColor = "#111";
-    codeInput.style.color = "#0ff";
-    codeInput.style.border = "2px solid #0ff";
-    codeInput.style.borderRadius = "4px";
-    codeInput.style.padding = "5px 10px";
-    codeInput.style.fontFamily = '"Press Start 2P", monospace'; // Retro font
-    codeInput.style.fontSize = "14px";
-    codeInput.style.outline = "none";
-    codeInput.style.textTransform = "uppercase";
-    codeInput.style.boxShadow = "0 0 10px #0ff";
-    codeInput.style.zIndex = 1000;
-    document.body.appendChild(codeInput);
+    this.codeInput.style.position = "absolute";
+    this.codeInput.style.left = "380px";
+    this.codeInput.style.top = "300px";
+    this.codeInput.style.width = "160px";
+    this.codeInput.style.height = "32px";
+    this.codeInput.style.backgroundColor = "#111";
+    this.codeInput.style.color = "#0ff";
+    this.codeInput.style.border = "2px solid #0ff";
+    this.codeInput.style.borderRadius = "4px";
+    this.codeInput.style.padding = "5px 10px";
+    this.codeInput.style.fontFamily = '"Press Start 2P", monospace';
+    this.codeInput.style.fontSize = "14px";
+    this.codeInput.style.outline = "none";
+    this.codeInput.style.textTransform = "uppercase";
+    this.codeInput.style.boxShadow = "0 0 10px #0ff";
+    this.codeInput.style.zIndex = 1000;
+
+    document.body.appendChild(this.codeInput);
 
     // Join Room button
     const joinBtn = this.add
       .text(100, 260, "[ Join Room ]", { fontSize: "22px", fill: "#0ff" })
       .setInteractive()
       .on("pointerdown", () => {
-        const code = codeInput.value.trim();
+        const code = this.codeInput.value.trim();
         if (code) {
           this.socket.emit("joinRoom", code);
         }
       });
 
     // Server responses
-    this.socket.on("roomCreated", (roomCode) => {
-      this.add.text(120, 160, `Таны өрөөний код: ${roomCode}`, {
+    this.socket.on("roomCreated", (data) => {
+      this.add.text(120, 160, `Таны өрөөний код: ${data.roomCode}`, {
         fontSize: "18px",
         fill: "#fff",
       });
     });
 
-    this.socket.on("roomJoined", (roomCode) => {
-      alert(`🎮 Both players joined! Room: ${roomCode}`);
+    this.socket.on("roomJoined", (data) => {
+      alert(`🎮 Both players joined! Room: ${data.roomCode}`);
       this.scene.start("GameScene", {
         socket: this.socket,
-        roomCode,
-      }); // GameScene рүү шилжих
-      if (codeInput && codeInput.parentNode) {
-        codeInput.parentNode.removeChild(codeInput);
+        roomCode: data.roomCode,
+        color: data.color,
+      });
+
+      if (this.codeInput && this.codeInput.parentNode) {
+        this.codeInput.parentNode.removeChild(this.codeInput);
       }
     });
 
@@ -92,8 +95,14 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   shutdown() {
-    // Scene сольж байх үед input устгах
-    const input = document.querySelector("input");
-    if (input) document.body.removeChild(input);
+    if (this.codeInput && this.codeInput.parentNode) {
+      this.codeInput.parentNode.removeChild(this.codeInput);
+    }
+  }
+
+  destroy() {
+    if (this.codeInput && this.codeInput.parentNode) {
+      this.codeInput.parentNode.removeChild(this.codeInput);
+    }
   }
 }

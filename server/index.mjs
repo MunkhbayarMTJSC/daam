@@ -1,97 +1,162 @@
+// server/index.mjs
+
 import { Server } from "socket.io";
 import { createServer } from "http";
 import express from "express";
-import { customAlphabet, nanoid } from "nanoid"; // ✅
+import { customAlphabet } from "nanoid";
+import GameRoom from "./rooms/GameRooms.js";
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Хөгжүүлэлт дээр бүх origin зөвшөөрнө
+    origin: "*",
   },
 });
 
-const rooms = {}; // { roomCode: [socketId1, socketId2] }
+const rooms = {}; // { roomCode: GameRoom instance }
 
 io.on("connection", (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
 
-  // Шинэ өрөө үүсгэх
+  // 🆕 Өрөө үүсгэх үед
   socket.on("createRoom", () => {
-    let roomCode;
+    let roomCode = 898989;
+    //const nanoid = customAlphabet("1234567890", 6);
     do {
-      const nanoid = customAlphabet("1234567890", 6);
-      roomCode = nanoid(); // A1B2C3 гэх мэт 6 оронтой code
+      //roomCode = nanoid();
     } while (rooms[roomCode]);
 
     const room = new GameRoom(roomCode);
     room.addPlayer(socket.id);
-    rooms[roomCode] = [socket.id];
+    rooms[roomCode] = room;
     socket.join(roomCode);
 
+    const color = room.getPlayerColor(socket.id); // ⬅️ Өнгө оноох
+
     console.log(`🆕 Room created: ${roomCode}`);
-    socket.emit("roomCreated", roomCode);
+    socket.emit("roomCreated", { roomCode, color }); // ⬅️ өнгийг буцаах
   });
 
-  // Өрөөнд нэвтрэх
+  // 🆕 JoinRoom үед
   socket.on("joinRoom", (roomCode) => {
     const room = rooms[roomCode];
 
-    if (!room || !room.addPlayer(socket.id)) {
+    if (!room || room.players.length >= 2) {
+      socket.emit("errorMessage", "Өрөө олдсонгүй эсвэл дүүрэн байна!");
+      return;
+    }
+
+    const added = room.addPlayer(socket.id);
+    if (!added) {
+      socket.emit("errorMessage", "Өрөө дүүрсэн байна!");
+      return;
+    }
+
+    socket.join(roomCode);
+
+    console.log(`👥 Player joined room: ${roomCode}`);
+
+    if (room.players.length === 2) {
+      const result = {
+        pieces: room.gameLogic.pieces,
+        currentTurn: room.gameLogic.currentTurn,
+      };
+      room.players.forEach((playerId) => {
+        const color = room.getPlayerColor(playerId); // ⬅️ өнгө
+        io.to(playerId).emit("roomJoined", {
+          roomCode,
+          color,
+          pieces: result.pieces,
+          currentTurn: result.currentTurn,
+        });
+      });
+    }
+  });
+
+  // Тоглогч өрөөнд ороод сэрвэртэй холбогдож байгаа бол updateEvent дуудна
+  socket.on("requestBoardState", (roomCode) => {
+    const room = rooms[roomCode];
+    if (!room) return;
+    const result = {
+      pieces: room.gameLogic.pieces,
+      currentTurn: room.gameLogic.currentTurn,
+    };
+    socket.emit("updateBoard", result);
+  });
+  // Хүү сонгоход серверт хандаж highlight хийх
+  socket.on("selectedPiece", ({ roomCode, pieceId }) => {
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    const color = room.getPlayerColor(socket.id);
+    const piece = room.gameLogic.pieces.find((p) => p.id === pieceId);
+
+    if (!piece) {
+      socket.emit("errorMessage", "Хүү олдсонгүй!");
+      return;
+    }
+    if (piece.color !== color) {
+      socket.emit("errorMessage", "Энэ хүү таных биш!");
+      return;
+    }
+
+    const moves = room.gameLogic.getValidMoves(piece); // ➡️ valid moves авах
+    socket.emit("highlightMoves", { piece, moves }); // ➡️ зөвхөн тухайн тоглогч руу буцаах
+  });
+  // Тоглогчийн нүүдэл ирэхэд ахих
+  socket.on("playerMove", ({ roomCode, piece, move }) => {
+    const room = rooms[roomCode];
+
+    if (!room) {
       socket.emit("errorMessage", "Өрөө олдсонгүй!");
       return;
     }
 
-    if (room.length >= 2) {
-      socket.emit("errorMessage", "Өрөө дүүрэн байна!");
-      return;
-    }
-
-    room.push(socket.id);
-    socket.join(roomCode);
-
-    console.log(`👥 Player joined room: ${roomCode}`);
-    // Өрөөний хоёр тоглогчид хоёуланд нь event илгээх
-    io.to(roomCode).emit("roomJoined", roomCode);
-  });
-
-  // Тоглооомноос гарах товч дарсан үед
-  socket.on("leaveRoom", (roomCode) => {
-    if (rooms[roomCode]) {
-      rooms[roomCode] = rooms[roomCode].filter((id) => !id === socket.id);
-      socket.leave(roomCode);
-      // Хэрвээ өрөөнд өөр хүн үлдээгүй бол устгана
-      if (rooms[roomCode].length === 0) {
-        delete rooms[roomCode];
-        console.log(`❌ Room deleted: ${roomCode}`);
-      } else {
-        // Хэрвээ нэг нь үлдсэн бол нөгөөд нь мэдэгдэж болно
-        io.to(roomCode).emit("opponentLeft");
+    const result = room.handleMove(socket.id, piece, move);
+    const socketIds = room.players;
+    for (const id of socketIds) {
+      if (result?.error) {
+        socket.emit("errorMessage", result.error);
+      } else if (result) {
+        // Өрөөнд байгаа БҮХ тоглогчдод шинэчлэл илгээх
+        io.to(id).emit("updateBoard", {
+          pieces: result.pieces,
+          currentTurn: result.currentTurn,
+        });
       }
     }
   });
 
-  // Тоглогчийн нүүдлийн эвэнтэд хариу өгөх
-  socket.on("playerMove", (roomCode, move) => {
-    const room = rooms.get(roomCode);
-    const result = room.handleMove(socket.id, move);
+  // Тоглогч өрөөнөөс гарах
+  socket.on("leaveRoom", (roomCode) => {
+    const room = rooms[roomCode];
+    if (!room) return;
 
-    if (result.error) {
-      socket.emit("errorMessage", result.error);
+    room.removePlayer(socket.id);
+    socket.leave(roomCode);
+
+    if (room.players.length === 0) {
+      delete rooms[roomCode];
+      console.log(`❌ Room deleted: ${roomCode}`);
     } else {
-      io.to(roomCode).emit("updateBoard", result); // << here
+      io.to(roomCode).emit("opponentLeft");
     }
   });
 
-  // Салсан тохиолдолд
+  // Салсан тохиолдол: тоглогч disconnect хийх
   socket.on("disconnect", () => {
-    for (const [roomCode, players] of Object.entries(rooms)) {
-      const index = players.indexOf(socket.id);
-      if (index !== -1) {
-        players.splice(index, 1);
-        if (players.length === 0) {
-          delete rooms[roomCode]; // өрөө устгах
+    for (const [roomCode, room] of Object.entries(rooms)) {
+      const idx = room.players.indexOf(socket.id);
+      if (idx !== -1) {
+        // Тоглогчийг массивнаас хасах
+        room.players.splice(idx, 1);
+
+        if (room.players.length === 0) {
+          delete rooms[roomCode];
           console.log(`❌ Room deleted: ${roomCode}`);
+        } else {
+          io.to(roomCode).emit("opponentLeft");
         }
         break;
       }
