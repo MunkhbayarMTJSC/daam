@@ -40,10 +40,10 @@ io.on("connection", (socket) => {
 
   // 🆕 Өрөө үүсгэх үед
   socket.on("createRoom", () => {
-    let roomCode = 898989;
-    //const nanoid = customAlphabet("1234567890", 6);
+    let roomCode;
+    const nanoid = customAlphabet("1234567890", 6);
     do {
-      //roomCode = nanoid();
+      roomCode = nanoid();
     } while (rooms[roomCode]);
 
     const room = new GameRooms(roomCode);

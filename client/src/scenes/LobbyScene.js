@@ -33,14 +33,16 @@ export default class LobbyScene extends Phaser.Scene {
           дарвал автоматаар эхлэнэ.`,
       { fontSize: "18px", fill: "#fff" }
     );
+    const canvasBounds = this.game.canvas.getBoundingClientRect();
     this.codeInput = document.createElement("input");
     this.codeInput.type = "text";
     this.codeInput.placeholder = "e.g. A1B2C3";
 
     // Загварын тохиргоо
     this.codeInput.style.position = "absolute";
-    this.codeInput.style.left = "380px";
-    this.codeInput.style.top = "300px";
+    this.codeInput.style.left = canvasBounds.left + 380 + "px"; // canvas-ааас баруун тийш 280px
+    this.codeInput.style.top = canvasBounds.top + 300 + "px"; // canvas-ааас дээшээс 280px
+
     this.codeInput.style.width = "160px";
     this.codeInput.style.height = "32px";
     this.codeInput.style.backgroundColor = "#111";
@@ -94,6 +96,11 @@ export default class LobbyScene extends Phaser.Scene {
     });
   }
 
+  update() {
+    const canvasBounds = this.game.canvas.getBoundingClientRect();
+    this.codeInput.style.left = canvasBounds.left + 380 + "px";
+    this.codeInput.style.top = canvasBounds.top + 300 + "px";
+  }
   shutdown() {
     if (this.codeInput && this.codeInput.parentNode) {
       this.codeInput.parentNode.removeChild(this.codeInput);
