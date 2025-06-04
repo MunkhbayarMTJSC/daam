@@ -1,10 +1,25 @@
 // server/index.mjs
 
-import { Server } from "socket.io";
-import { createServer } from "http";
+// index.mjs
+
 import express from "express";
-import { customAlphabet } from "nanoid";
-import GameRoom from "./rooms/GameRooms.js";
+import http from "http";
+import { Server } from "socket.io";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files
+app.use(express.static(path.join(__dirname, "public")));
+
+// ...таны бусад Socket.IO логик энд байна...
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`🚀 Server listening on port ${PORT}`);
+});
 
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
