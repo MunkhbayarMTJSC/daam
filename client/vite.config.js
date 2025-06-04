@@ -1,6 +1,5 @@
-import { defineConfig } from "vite";
-
 export default defineConfig({
+  envPrefix: "VITE_",
   server: {
     proxy: {
       "/socket.io": {
@@ -10,7 +9,6 @@ export default defineConfig({
     },
   },
   build: {
-    // input заах шаардлагагүй, default main.html-ийг ашиглана
     outDir: "dist",
   },
 });
