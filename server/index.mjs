@@ -37,10 +37,7 @@ server.listen(PORT, () => {
 
 // ⬇️ Өгөгдөлийн сантай холбоно
 mongoose
-  .connect("mongodb://localhost:27017/checkers", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB холбогдлоо"))
   .catch((err) => console.error("❌ MongoDB холбогдож чадсангүй:", err));
 
