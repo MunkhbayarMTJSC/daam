@@ -33,7 +33,7 @@ const rooms = {}; // { roomCode: GameRoom instance }
 // ⬇️ Server эхлүүлэх
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server listening on http://localhost:${PORT}`);
+  console.log(`🚀 Server listening on ${PORT}`);
 });
 
 // ✔️ ОРЧИНГ ялгах
@@ -44,6 +44,8 @@ mongoose
   .connect(mongoURI)
   .then(() => console.log("✅ MongoDB холбогдлоо"))
   .catch((err) => console.error("❌ MongoDB холбогдож чадсангүй:", err));
+
+console.log(process.env.MONGO_URI);
 
 io.on("connection", (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
