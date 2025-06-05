@@ -35,9 +35,12 @@ server.listen(PORT, () => {
   console.log(`🚀 Server listening on http://localhost:${PORT}`);
 });
 
-// ⬇️ Өгөгдөлийн сантай холбоно
+// ✔️ ОРЧИНГ ялгах
+const isProd = process.env.NODE_ENV === "production";
+const mongoURI = process.env.MONGO_URI;
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(mongoURI)
   .then(() => console.log("✅ MongoDB холбогдлоо"))
   .catch((err) => console.error("❌ MongoDB холбогдож чадсангүй:", err));
 
