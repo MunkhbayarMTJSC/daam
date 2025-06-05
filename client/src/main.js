@@ -6,7 +6,7 @@ import MainScene from "./scenes/MainScene.js";
 import PlayWithFriend from "./scenes/PlayWithFriend.js";
 
 // const socket = io("http://localhost:3000"); // сервертэй холбох
-const socket = io("wss://daam-cmwqk8kxl-mbsicas-projects.vercel.app", {
+const socket = io("https://daam-production.up.railway.app", {
   transports: ["websocket"],
 });
 
