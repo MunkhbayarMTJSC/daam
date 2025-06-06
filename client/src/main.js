@@ -5,9 +5,9 @@ import GameScene from "./scenes/GameScene.js";
 import MainScene from "./scenes/MainScene.js";
 import PlayWithFriend from "./scenes/PlayWithFriend.js";
 
-// const socket = io("http://localhost:3000"); // сервертэй холбох
-const socket = io("https://daam-production.up.railway.app", {
-  transports: ["websocket"],
+//const socket = io("http://localhost:3000"); // сервертэй холбох
+const socket = io(import.meta.env.VITE_SOCKET_SERVER_URL, {
+  transports: ["polling", "websocket"],
 });
 
 const config = {
@@ -26,4 +26,3 @@ const game = new Phaser.Game(config);
 
 // LobbyScene эхлүүлж socket дамжуулна
 game.scene.start("MainScene", socket);
-console.log("🔍 Socket server:", import.meta.env.VITE_SOCKET_SERVER_URL);
