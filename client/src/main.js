@@ -1,6 +1,5 @@
 import { io } from "socket.io-client";
 import Phaser from "phaser";
-import LobbyScene from "./scenes/LobbyScene.js";
 import GameScene from "./scenes/GameScene.js";
 import MainScene from "./scenes/MainScene.js";
 import PlayWithFriend from "./scenes/PlayWithFriend.js";
@@ -19,7 +18,7 @@ const config = {
     mode: Phaser.Scale.FIT, // ✅ дэлгэцэнд тааруулж сунгах
     autoCenter: Phaser.Scale.CENTER_BOTH, // ✅ canvas-ийг төвд нь байрлуулах
   },
-  scene: [MainScene, PlayWithFriend, LobbyScene, GameScene],
+  scene: [MainScene, PlayWithFriend, GameScene],
 };
 
 const game = new Phaser.Game(config);

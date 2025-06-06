@@ -16,14 +16,19 @@ export default class Pieces {
     });
   }
 
+  // bg 506x900 board 430x430 tileSizeReal 50
+  // gamewith 416*740
+
   updateBoardFromServer(piecesArray, currentTurn, movablePieces) {
     this.clearPieces();
     const movablePieceIds = new Set(movablePieces.map((p) => p.id));
     for (const piece of piecesArray) {
       const { id, row, col, color, isKing } = piece;
       const { x, y } = this.board.getTilePosition(row, col);
-      const frame = color === 0 ? (isKing ? 3 : 1) : isKing ? 2 : 0;
-      const sprite = this.scene.add.sprite(x, y, "pieces", frame);
+      const frame = color === 0 ? (isKing ? 2 : 3) : isKing ? 0 : 1;
+      const sprite = this.scene.add
+        .sprite(x, y, "pieces", frame)
+        .setScale(0.45);
       sprite.row = row;
       sprite.col = col;
       this.pieces.set(id, sprite);
@@ -71,8 +76,8 @@ export default class Pieces {
       // Хүснэгтэн дээр харагдах байрлал автоматаар BoardView дээр хөрвүүлэгдэнэ
       const { x, y } = this.board.getTilePosition(move.row, move.col);
 
-      const rect = this.scene.add
-        .rectangle(x, y, 45, 45, 0xffffff, 0.3) // цагаан өнгө, 30% тунгалаг
+      const circle = this.scene.add
+        .circle(x, y, 12, 0x2c7630, 0.5) // радиус 15, цайвар ногоон, 30% тунгалаг
         .setInteractive()
         .on("pointerdown", () => {
           this.highlightGraphics.clear();
@@ -92,9 +97,9 @@ export default class Pieces {
           });
         });
 
-      rect.setStrokeStyle(2, 0xffffff); // Гадна хүрээ
-      rect.setDepth(10);
-      this.validMoveCircles.push(rect);
+      circle.setStrokeStyle(2, 0x2c7630); // гадна хүрээ мөн цайвар ногоон
+      circle.setDepth(10);
+      this.validMoveCircles.push(circle);
     }
   }
   highlightMovablePieces(movablePieces) {
@@ -107,10 +112,10 @@ export default class Pieces {
 
         // Нэг graphics объект бүртгэж авъя
         const glow = this.scene.add.graphics();
-        glow.fillStyle(0x37cb71, 0.5);
-        glow.fillRoundedRect(sprite.x - 22, sprite.y - 22, 45, 45, 5);
-        glow.lineStyle(2, 0x37cb71, 1);
-        glow.strokeRoundedRect(sprite.x - 22, sprite.y - 22, 45, 45, 5);
+        glow.fillStyle(0xffffff, 0.5);
+        glow.fillRoundedRect(sprite.x - 20, sprite.y - 20, 40, 40, 5);
+        glow.lineStyle(2, 0x000000, 1);
+        glow.strokeRoundedRect(sprite.x - 20, sprite.y - 20, 40, 40, 1);
         glow.setDepth(9);
 
         // Анивчуулах эффект

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { loadAndShowProfile } from "./uiHelpers.js";
 
 export default class MainLobby extends Phaser.Scene {
   constructor() {
@@ -16,6 +17,11 @@ export default class MainLobby extends Phaser.Scene {
         username: "TestUser" + Math.floor(Math.random() * 100),
         avatarUrl:
           "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + Math.random(),
+        level: 1,
+        xp: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        createdAt: new Date().toISOString(),
       };
       localStorage.setItem("playerData", JSON.stringify(mockPlayer));
       socket.emit("playerConnected", mockPlayer);
@@ -32,14 +38,15 @@ export default class MainLobby extends Phaser.Scene {
       this.gamesPlayed = data.gamesPlayed;
       this.gamesWon = data.gamesWon;
       this.createdAt = data.createdAt;
-      this.headInfos();
+
+      localStorage.setItem("playerData", JSON.stringify(data));
+      loadAndShowProfile(this, this.avatarUrl, this.level);
     });
   }
 
   preload() {
     this.load.image("bg", "/assets/bg.png");
     this.load.image("playWithFriend", "/assets/play1.png");
-
     this.load.spritesheet("profileFrames", "assets/profile_frames.png", {
       frameWidth: 100,
       frameHeight: 100,
@@ -50,13 +57,18 @@ export default class MainLobby extends Phaser.Scene {
     const { width, height } = this.scale;
 
     this.add.image(width / 2, height / 2, "bg").setDisplaySize(width, height);
+    const data = {
+      playerData: localStorage.getItem("playerData"),
+      playerObj: JSON.parse(localStorage.getItem("playerData") || "{}"),
+      socket: this.socket,
+    };
 
     const btn1 = this.add.image(width / 2, height / 2, "playWithFriend");
     btn1.setOrigin(0.5);
     btn1.setScale(0.4);
     btn1.setInteractive({ useHandCursor: true });
     btn1.on("pointerdown", () => {
-      this.scene.start("PlayWithFriend");
+      this.scene.start("PlayWithFriend", data);
     });
 
     this.tweens.add({
@@ -67,35 +79,27 @@ export default class MainLobby extends Phaser.Scene {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
+    this.events.once("shutdown", () => {
+      // Бүх profile элементүүдийг устгах
+      if (this.profileElements) {
+        this.profileElements.forEach((el) => {
+          if (el && el.destroy) el.destroy();
+        });
+        this.profileElements = null;
+      }
+
+      // Texture-г устгах (WebGL дотор устгах шаардлагатай)
+      if (this.textures.exists("profileImage")) {
+        this.textures.remove("profileImage");
+      }
+
+      // Socket listener-уудыг салгах
+      if (this.socket) {
+        this.socket.removeAllListeners("updateBoard");
+        this.socket.removeAllListeners("gameEnded");
+      }
+    });
   }
 
   update() {}
-  headInfos() {
-    // 🔹 Avatar зураг ирсний дараа ачаалж харуулна
-    this.load.image("profileImage", this.avatarUrl);
-    this.load.once("complete", () => {
-      const { width } = this.scale;
-      const profileImage = this.add
-        .image(width * 0.1, width * 0.1, "profileImage")
-        .setDisplaySize(60, 60);
-      const maskShape = this.make.graphics({ x: 0, y: 0, add: false });
-      maskShape.fillStyle(0xffffff);
-      maskShape.fillCircle(width * 0.1, width * 0.1, 30); // x, y байрлал + радиус (35 = 70/2)
-      const mask = maskShape.createGeometryMask();
-      profileImage.setMask(mask);
-
-      const profileFrame = this.add.sprite(
-        width * 0.1,
-        width * 0.1,
-        "profileFrames",
-        3
-      );
-      profileFrame.setDisplaySize(70, 70);
-      this.add.text(width * 0.06, width * 0.135, `LvL ${this.level}`, {
-        fontSize: "12px",
-        color: "#000000",
-      });
-    });
-    this.load.start();
-  }
 }

@@ -3,6 +3,7 @@
 import Phaser from "phaser";
 import BoardView from "../classes/BoardView.js";
 import Pieces from "../classes/PiecesView.js";
+import { loadAndShowProfile } from "./uiHelpers.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -13,46 +14,41 @@ export default class GameScene extends Phaser.Scene {
     this.roomCode = data.roomCode;
     this.isHost = data.isHost;
     this.playerColor = data.color;
+    this.allData = data.allData;
   }
 
   preload() {
     this.load.image("board", "assets/board.png");
     this.load.spritesheet("pieces", "assets/pieces.png", {
-      frameWidth: 48, // нэг дүрсний өргөн
-      frameHeight: 48, // нэг дүрсний өндөр
+      frameWidth: 96, // нэг дүрсний өргөн
+      frameHeight: 96, // нэг дүрсний өндөр
     });
   }
 
   create() {
-    this.add.text(
-      270,
-      560,
-      `🧑‍💼 Таны өнгө: ${this.playerColor === 0 ? "Улаан" : "Хар"}`,
-      {
-        fontSize: "20px",
-        fill: "#ff0",
-      }
+    const { width, height } = this.scale;
+    loadAndShowProfile(
+      this,
+      this.allData.playerObj.avatarUrl,
+      this.allData.playerObj.level
     );
     this.board = new BoardView(this);
     this.pieces = new Pieces(this, this.board, this.playerColor);
     this.currentTurn = 0;
-    this.board.draw();
-    this.add.text(5, 5, `Room Code: ${this.roomCode}`, {
+    this.board.draw(width, height);
+
+    const leaveBtn = this.add.text(width * 0.8, height * 0.05, `[Гарах]`, {
       fontSize: "22px",
       fill: "#0ff",
     });
-
-    const leaveBtn = this.add
-      .text(700, 10, `[Гарах]`, { fontSize: "22px", fill: "#0ff" })
-      .setInteractive()
-      .on("pointerdown", () => {
-        if (this.socket) {
-          this.socket.emit("leaveRoom", this.roomCode);
-          this.scene.start("LobbyScene", this.socket);
-        } else {
-          console.warn("⚠ socket is undefined!");
-        }
-      });
+    leaveBtn.setInteractive().on("pointerdown", () => {
+      if (this.socket) {
+        this.socket.emit("leaveRoom", this.roomCode);
+        this.scene.start("MainScene", this.socket);
+      } else {
+        console.warn("⚠ socket is undefined!");
+      }
+    });
     this.socket.emit("requestBoardState", this.roomCode);
 
     this.socket.off("updateBoard"); // өмнөх бүртгэлийг устгах
@@ -64,12 +60,32 @@ export default class GameScene extends Phaser.Scene {
         data.currentTurn,
         data.movablePieces
       );
-      console.log(data.currentTurn);
     });
     this.board.setPlayerColor(this.playerColor); // 0 эсвэл 1
 
     this.socket.on("gameEnded", ({ winner }) => {
-      this.scene.start("LobbyScene", { winner });
+      this.scene.start("MainScene", { winner });
+    });
+
+    this.events.once("shutdown", () => {
+      // Бүх profile элементүүдийг устгах
+      if (this.profileElements) {
+        this.profileElements.forEach((el) => {
+          if (el && el.destroy) el.destroy();
+        });
+        this.profileElements = null;
+      }
+
+      // Texture-г устгах (WebGL дотор устгах шаардлагатай)
+      if (this.textures.exists("profileImage")) {
+        this.textures.remove("profileImage");
+      }
+
+      // Socket listener-уудыг салгах
+      if (this.socket) {
+        this.socket.removeAllListeners("updateBoard");
+        this.socket.removeAllListeners("gameEnded");
+      }
     });
   }
 }

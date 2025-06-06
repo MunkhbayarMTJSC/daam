@@ -37,7 +37,6 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server listening on ${PORT}`);
 });
-
 // ✔️ ОРЧИНГ ялгах
 const isProd = process.env.NODE_ENV === "production";
 const mongoURI = process.env.MONGO_URI;
