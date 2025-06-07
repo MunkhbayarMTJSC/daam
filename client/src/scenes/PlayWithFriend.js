@@ -8,23 +8,16 @@ export default class PlayWithFriend extends Phaser.Scene {
     this.data = data;
     this.socket = data.socket;
   }
-  preload() {
-    this.load.image("bgFriend", "/assets/friends.png");
-    this.load.image("createTabBtn", "/assets/create_tab.png");
-    this.load.spritesheet("tabButtons", "assets/tab_buttons.png", {
-      frameWidth: 300,
-      frameHeight: 98,
-    });
-    this.load.image("createBtn", "/assets/create_btn.png");
-    this.load.image("joinBtn", "/assets/join_btn.png");
-    this.load.image("tabBg", "/assets/bgTab.png");
-  }
+  preload() {}
   create() {
     const { width, height } = this.scale;
-
     this.add
       .image(width / 2, height / 2, "bgFriend")
       .setDisplaySize(width, height);
+    this.add
+      .image(width * 0.08, height * 0.04, "homeBtn")
+      .setScale(0.4)
+      .setOrigin(0.5);
 
     // 🟦 Таб товчлуурууд
     this.createTab = this.add
@@ -60,20 +53,10 @@ export default class PlayWithFriend extends Phaser.Scene {
     this.joinTabContent = this.add.container(0, 0).setVisible(false);
 
     // 🟨 CREATE ROOM TAB - контент
-
-    const roomCode = Phaser.Math.Between(100000, 999999).toString();
-    const codeText = this.add
-      .text(width / 2, 50, roomCode, {
-        fontSize: "24px",
-        color: "#000",
-      })
-      .setOrigin(0.5);
     const createTabBg = this.add
       .image(width / 2, height / 2, "tabBg")
       .setDisplaySize(width, height);
     this.createTabContent.add(createTabBg);
-
-    this.createTabContent.add(codeText);
 
     // Create Button
     const createBtn = this.add
@@ -96,6 +79,7 @@ export default class PlayWithFriend extends Phaser.Scene {
         {
           fontSize: "18px",
           fill: "#fff",
+          fontFamily: "MongolFont", // ← энд фонтын нэр
         }
       )
       .setOrigin(0.5);
@@ -104,6 +88,7 @@ export default class PlayWithFriend extends Phaser.Scene {
       .text(width / 2, height * 0.5, `Таны орооны код:`, {
         fontSize: "24px",
         fill: "#fff",
+        fontFamily: "MongolFont",
       })
       .setOrigin(0.5);
     this.createTabContent.add(createHolder);
@@ -130,8 +115,9 @@ export default class PlayWithFriend extends Phaser.Scene {
 
     const placeholder = this.add
       .text(width / 2, height * 0.35, "Өрөөний кодоо оруулна уу!", {
-        fontSize: "24px",
+        fontSize: "18px",
         color: "#fff",
+        fontFamily: "MongolFont",
       })
       .setOrigin(0.5);
 
@@ -155,6 +141,8 @@ export default class PlayWithFriend extends Phaser.Scene {
     // --------------------
     // 🔢 0–9 товчлуурууд
     // --------------------
+    const buttonMap = [1, 2, 3, 4, 5, 6, 7, 8, 9, "clear", 0, "back"];
+
     const numberButtonStyle = {
       fontSize: "28px",
       color: "#000",
@@ -162,76 +150,37 @@ export default class PlayWithFriend extends Phaser.Scene {
       padding: { x: 10, y: 5 },
     };
 
-    const buttonWidth = 60;
-    const buttonHeight = 50;
-    const startX = width / 2 - buttonWidth * 1.5;
+    const buttonWidth = 100;
+    const buttonHeight = 56;
+    const startX = width * 0.265;
     const startY = height * 0.55;
 
-    for (let i = 1; i <= 9; i++) {
-      const x = startX + ((i - 1) % 3) * (buttonWidth + 10);
-      const y = startY + Math.floor((i - 1) / 3) * (buttonHeight + 10);
+    buttonMap.forEach((value, index) => {
+      const x = startX + (index % 3) * buttonWidth;
+      const y = startY + Math.floor(index / 3) * buttonHeight;
 
       const btn = this.add
-        .text(x, y, String(i), numberButtonStyle)
-        .setInteractive()
-        .setOrigin(0.5)
-        .on("pointerdown", () => {
+        .sprite(x, y, "numpad", index)
+        .setScale(0.7)
+        .setInteractive();
+
+      btn.on("pointerdown", () => {
+        if (typeof value === "number") {
           if (this.roomCode.length < 6) {
-            this.roomCode += String(i);
+            this.roomCode += String(value);
             this.codeText.setText(this.roomCode);
           }
-        });
-
-      this.joinTabContent.add(btn);
-    }
-
-    // 0 товч
-    const zeroBtn = this.add
-      .text(width / 2, startY + (buttonHeight + 10) * 3, "0", numberButtonStyle)
-      .setInteractive()
-      .setOrigin(0.5)
-      .on("pointerdown", () => {
-        if (this.roomCode.length < 6) {
-          this.roomCode += "0";
+        } else if (value === "clear") {
+          this.roomCode = "";
+          this.codeText.setText(this.roomCode);
+        } else if (value === "back") {
+          this.roomCode = this.roomCode.slice(0, -1);
           this.codeText.setText(this.roomCode);
         }
       });
 
-    this.joinTabContent.add(zeroBtn);
-
-    // 🔙 Backspace товч
-    const backspaceBtn = this.add
-      .text(
-        width / 2 + buttonWidth + 20,
-        startY + (buttonHeight + 10) * 3,
-        " ← ",
-        numberButtonStyle
-      )
-      .setInteractive()
-      .setOrigin(0.5)
-      .on("pointerdown", () => {
-        this.roomCode = this.roomCode.slice(0, -1);
-        this.codeText.setText(this.roomCode);
-      });
-
-    this.joinTabContent.add(backspaceBtn);
-
-    // ❌ Clear товч
-    const clearBtn = this.add
-      .text(
-        width / 2 - buttonWidth - 20,
-        startY + (buttonHeight + 10) * 3,
-        "Clear",
-        numberButtonStyle
-      )
-      .setInteractive()
-      .setOrigin(0.5)
-      .on("pointerdown", () => {
-        this.roomCode = "";
-        this.codeText.setText(this.roomCode);
-      });
-
-    this.joinTabContent.add(clearBtn);
+      this.joinTabContent.add(btn);
+    });
 
     // --------------------
     // ⌨ Keyboard input
@@ -286,39 +235,6 @@ export default class PlayWithFriend extends Phaser.Scene {
     joinTabBtn.on("pointerdown", () => {
       this.createTabContent.setVisible(false);
       this.joinTabContent.setVisible(true);
-    });
-  }
-  createHtmlInputBox() {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.maxLength = 6;
-    input.placeholder = "Өрөөний код";
-    input.style.position = "absolute";
-    input.style.zIndex = "1000";
-    input.style.fontSize = "24px";
-    input.style.padding = "10px";
-    input.style.border = "2px solid black";
-    input.style.borderRadius = "10px";
-    input.style.width = "200px";
-    input.style.textAlign = "center";
-
-    // Canvas-ийн байрлал дээр байрлуулах
-    const canvasBounds = this.game.canvas.getBoundingClientRect();
-    input.style.left = canvasBounds.left + this.scale.width / 2 - 100 + "px";
-    input.style.top = canvasBounds.top + this.scale.height * 0.55 - 35 + "px";
-
-    document.body.appendChild(input);
-
-    input.focus();
-
-    input.addEventListener("input", () => {
-      this.roomCode = input.value;
-      this.codeText.setText(this.roomCode);
-    });
-
-    // Scene солигдоход input устгах
-    this.events.once("shutdown", () => {
-      input.remove();
     });
   }
 }

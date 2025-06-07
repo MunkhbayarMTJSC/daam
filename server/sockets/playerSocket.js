@@ -11,6 +11,9 @@ export default function handlePlayerSocket(socket, io) {
       socket.player = {
         userId: player.userId,
         username: player.username,
+        coins: player.coins,
+        gems: player.gems,
+        vip: player.vip,
         level: player.level,
         xp: player.xp,
         gamesPlayed: player.gamesPlayed,

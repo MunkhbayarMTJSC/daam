@@ -17,20 +17,19 @@ export default class GameScene extends Phaser.Scene {
     this.allData = data.allData;
   }
 
-  preload() {
-    this.load.image("board", "assets/board.png");
-    this.load.spritesheet("pieces", "assets/pieces.png", {
-      frameWidth: 96, // нэг дүрсний өргөн
-      frameHeight: 96, // нэг дүрсний өндөр
-    });
-  }
+  preload() {}
 
   create() {
     const { width, height } = this.scale;
+    const position = {
+      x: width * 0.1,
+      y: height * 0.13,
+    };
     loadAndShowProfile(
       this,
       this.allData.playerObj.avatarUrl,
-      this.allData.playerObj.level
+      this.allData.playerObj.level,
+      position
     );
     this.board = new BoardView(this);
     this.pieces = new Pieces(this, this.board, this.playerColor);
