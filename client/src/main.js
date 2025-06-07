@@ -1,4 +1,3 @@
-import { io } from "socket.io-client";
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene.js";
 import MainScene from "./scenes/MainScene.js";
@@ -6,9 +5,6 @@ import PlayWithFriend from "./scenes/PlayWithFriend.js";
 import PreloadScene from "./scenes/PreloadScene.js";
 
 //const socket = io("http://localhost:3000"); // сервертэй холбох
-const socket = io(import.meta.env.VITE_SOCKET_SERVER_URL, {
-  transports: ["polling", "websocket"],
-});
 
 const config = {
   type: Phaser.WEBGL,
@@ -25,4 +21,4 @@ const config = {
 const game = new Phaser.Game(config);
 
 // LobbyScene эхлүүлж socket дамжуулна
-game.scene.start("MainScene", socket);
+game.scene.start("MainScene");

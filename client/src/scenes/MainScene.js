@@ -1,13 +1,14 @@
 import Phaser from "phaser";
 import { loadAndShowProfile } from "./uiHelpers.js";
+import { getSocket, initSocket } from "../network/socketManager.js";
 
 export default class MainLobby extends Phaser.Scene {
   constructor() {
     super("MainScene");
   }
 
-  init(socket) {
-    this.socket = socket;
+  init() {
+    this.socket = getSocket() || initSocket();
 
     let storedUser = localStorage.getItem("playerData");
 
@@ -27,9 +28,9 @@ export default class MainLobby extends Phaser.Scene {
         createdAt: new Date().toISOString(),
       };
       localStorage.setItem("playerData", JSON.stringify(mockPlayer));
-      socket.emit("playerConnected", mockPlayer);
+      this.socket.emit("playerConnected", mockPlayer);
     } else {
-      socket.emit("playerConnected", JSON.parse(storedUser));
+      this.socket.emit("playerConnected", JSON.parse(storedUser));
     }
 
     // 🔹 Серверээс тоглогчийн мэдээлэл ирсний дараа avatar-г ачаална
@@ -49,6 +50,7 @@ export default class MainLobby extends Phaser.Scene {
         x: 43,
         y: 60,
       };
+
       loadAndShowProfile(this, this.avatarUrl, this.level, position);
     });
   }
@@ -94,10 +96,18 @@ export default class MainLobby extends Phaser.Scene {
       .image(width * 0.33, height * 0.058, "coins")
       .setScale(0.55)
       .setOrigin(0.5);
+    this.add.text(113, 37, this.coins, {
+      fontSize: "14px",
+      fill: "#fff",
+    });
     const gems = this.add
       .image(width * 0.33, height * 0.108, "gems")
       .setScale(0.55)
       .setOrigin(0.5);
+    this.add.text(113, 74, this.gems, {
+      fontSize: "14px",
+      fill: "#fff",
+    });
     const vip = this.add
       .image(width * 0.76, height * 0.083, "vip")
       .setScale(0.68)

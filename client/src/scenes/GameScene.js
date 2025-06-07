@@ -3,7 +3,7 @@
 import Phaser from "phaser";
 import BoardView from "../classes/BoardView.js";
 import Pieces from "../classes/PiecesView.js";
-import { loadAndShowProfile } from "./uiHelpers.js";
+import UIOverlay from "../utils/UIOverlay.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -21,26 +21,15 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
-    const position = {
-      x: width * 0.1,
-      y: height * 0.13,
-    };
-    loadAndShowProfile(
-      this,
-      this.allData.playerObj.avatarUrl,
-      this.allData.playerObj.level,
-      position
-    );
     this.board = new BoardView(this);
+    this.ui = new UIOverlay(this);
     this.pieces = new Pieces(this, this.board, this.playerColor);
     this.currentTurn = 0;
     this.board.draw(width, height);
-
-    const leaveBtn = this.add.text(width * 0.8, height * 0.05, `[Гарах]`, {
-      fontSize: "22px",
-      fill: "#0ff",
-    });
-    leaveBtn.setInteractive().on("pointerdown", () => {
+    const homeBtn = this.add.image(width * 0.065, height * 0.03, "homeBtn");
+    homeBtn.setScale(0.35);
+    homeBtn.setOrigin(0.5);
+    homeBtn.setInteractive().on("pointerdown", () => {
       if (this.socket) {
         this.socket.emit("leaveRoom", this.roomCode);
         this.scene.start("MainScene", this.socket);

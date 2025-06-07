@@ -5,11 +5,11 @@ import { customAlphabet } from "nanoid";
 export default function handleRoomSocket(socket, io, rooms) {
   // 🆕 Өрөө үүсгэх үед
   socket.on("createRoom", () => {
-    let roomCode;
-    const nanoid = customAlphabet("1234567890", 6);
-    do {
-      roomCode = nanoid();
-    } while (rooms[roomCode]);
+    let roomCode = 898989;
+    // const nanoid = customAlphabet("1234567890", 6);
+    // do {
+    //   roomCode = nanoid();
+    // } while (rooms[roomCode]);
 
     const room = new GameRooms(roomCode);
     room.addPlayer(socket.id);
