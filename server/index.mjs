@@ -7,9 +7,11 @@ import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
-import handlePlayerSocket from "./sockets/playerSocket.js";
-import handleGameSocket from "./sockets/gameSocket.js";
-import handleRoomSocket from "./sockets/roomSocket.js";
+import PlayerController from "./controller/PlayerController.js";
+import GameController from "./controller/GameController.js";
+import MissionController from "./controller/MissionController.js";
+import RoomController from "./controller/RoomController.js";
+
 // __dirname тохируулах
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,9 +52,10 @@ io.on("connection", (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
 
   // 🆕 Тоглогчийн соккит
-  handlePlayerSocket(socket, io);
+  PlayerController(socket, io);
+  MissionController(socket, io);
   // 🆕 Өрөөний соккит
-  handleRoomSocket(socket, io, rooms);
+  GameController(socket, io, rooms);
 
-  handleGameSocket(socket, io, rooms);
+  RoomController(socket, io, rooms);
 });

@@ -18,13 +18,6 @@ export default class MainLobby extends Phaser.Scene {
         username: "TestUser" + Math.floor(Math.random() * 100),
         avatarUrl:
           "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + Math.random(),
-        coins: 0,
-        gems: 0,
-        vip: false,
-        level: 1,
-        xp: 0,
-        gamesPlayed: 0,
-        gamesWon: 0,
         createdAt: new Date().toISOString(),
       };
       localStorage.setItem("playerData", JSON.stringify(mockPlayer));
@@ -125,7 +118,13 @@ export default class MainLobby extends Phaser.Scene {
     const missions = this.add
       .image(width * 0.2, height * 0.22, "missions")
       .setScale(0.4)
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    missions.on("pointerdown", () => {
+      console.log("Clicked");
+      this.showMissionPopup(); // userId-г бодит утгаар солино
+    });
+
     const reward = this.add
       .image(width * 0.5, height * 0.22, "reward")
       .setScale(0.4)
@@ -188,5 +187,48 @@ export default class MainLobby extends Phaser.Scene {
       .image(width * 0.9, height * 0.93, "list_shop")
       .setScale(1)
       .setOrigin(0.5);
+  }
+
+  showMissionPopup() {
+    const { width, height } = this.scale;
+    // Popup background
+    const popupBg = this.add
+      .image(width / 2, height / 2, "missionBg")
+      .setDisplaySize(width, height);
+
+    // Хаах товч
+    const closeBtn = this.add
+      .image(width * 0.88, height * 0.21, "close")
+      .setScale(0.7)
+      .setInteractive({ useHandCursor: true });
+
+    // Хаах товч дарахад бүх popup элементүүдийг устгана
+    closeBtn.on("pointerdown", () => {
+      popupBg.destroy();
+      closeBtn.destroy();
+      missionTexts.forEach((text) => text.destroy());
+    });
+
+    // Daily миссонуудыг авч харуулах
+    let missionTexts = [];
+    this.socket.emit("get_missions", (missions) => {
+      const dailyMissions = missions.filter((m) => m.type === "daily");
+      console.log("Daily Missions", dailyMissions);
+
+      dailyMissions.forEach((mission, index) => {
+        const text = this.add
+          .text(
+            width * 0.3,
+            200 + index * 30,
+            `• ${mission.title} (${mission.goal})`,
+            {
+              fontSize: "16px",
+              color: "#000",
+            }
+          )
+          .setOrigin(0.5);
+        missionTexts.push(text);
+      });
+    });
   }
 }

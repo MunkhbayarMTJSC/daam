@@ -1,33 +1,57 @@
-import Player from "../model/Player.js";
+import {
+  findOrCreatePlayer,
+  addXp,
+  recordGameResult,
+} from "../service/PlayerService.js";
 
-async function findOrCreatePlayer({ userId, username, avatarUrl }) {
-  let player = await Player.findOne({ userId });
-  if (!player) {
-    player = new Player({ userId, username, avatarUrl });
-    await player.save();
-    console.log(`🆕 New player registered: ${username}`);
+export default function handlePlayerSocket(socket, io) {
+  socket.on("playerConnected", async (data) => {
+    try {
+      const player = await findOrCreatePlayer(data);
+      socket.player = {
+        userId: player.userId,
+        username: player.username,
+        coins: player.coins,
+        gems: player.gems,
+        vip: player.vip,
+        level: player.level,
+        xp: player.xp,
+        gamesPlayed: player.gamesPlayed,
+        gamesWon: player.gamesWon,
+        createdAt: player.createdAt,
+      };
+      socket.emit("playerDataLoaded", player);
+    } catch (err) {
+      console.error("Player connection error:", err);
+      socket.emit("errorMessage", "Player connection failed.");
+    }
+  });
+
+  if (!socket.player) {
+    return socket.emit("errorMessage", "Player not connected.");
+  } else {
   }
-  return player;
+
+  socket.on("addXp", async (amount) => {
+    if (!socket.player) {
+      return socket.emit("errorMessage", "Player not connected.");
+    }
+
+    try {
+      const updated = await addXp(socket.player.userId, amount);
+      socket.emit("xpUpdated", updated);
+    } catch (err) {
+      console.error("XP add error:", err);
+    }
+  });
+
+  socket.on("gameEnded", async ({ roomCode, winnerId }) => {
+    try {
+      const won = socket.player.userId === winnerId;
+      const updated = await recordGameResult(socket.player.userId, won);
+      socket.emit("gameStatsUpdated", updated);
+    } catch (err) {
+      console.error("Game result error:", err);
+    }
+  });
 }
-
-async function addXp(userId, amount) {
-  const player = await Player.findOne({ userId });
-  if (!player) throw new Error("Player not found");
-
-  player.xp += amount;
-
-  await player.save();
-  return player;
-}
-async function recordGameResult(userId, won) {
-  const player = await Player.findOne({ userId });
-  if (!player) throw new Error("Player not found");
-
-  player.gamesPlayed++;
-  if (won) player.gamesWon++;
-  await player.save();
-
-  return player;
-}
-
-export { findOrCreatePlayer, addXp, recordGameResult };

@@ -3,18 +3,21 @@ import GameLogic from "./GameLogic.js";
 import Board from "../model/Board.js";
 
 export default class GameRooms {
-  constructor(roomCode) {
+  constructor(roomCode, io) {
     this.roomCode = roomCode;
     this.players = [];
     this.board = new Board();
-    this.gameLogic = new GameLogic(this.board);
-    this.gameLogic.createInitialPieces();
+    this.io = io;
     this.currentTurn = 1;
     this.playerColors = {};
-    const logic = new GameLogic(this.board, (winner) => {
-      io.to(roomCode).emit("gameEnded", { winner });
+
+    this.gameLogic = new GameLogic(this.board, (winner) => {
+      this.io.to(this.roomCode).emit("gameEnded", { winner });
     });
+
+    this.gameLogic.createInitialPieces();
   }
+
   addPlayer(socketId) {
     if (this.players.length >= 2) return false;
 
@@ -37,6 +40,7 @@ export default class GameRooms {
   isPlayerTurn(socketId) {
     return this.players[this.currentTurn] === socketId;
   }
+
   handleMove(socketId, pieceData, moveData) {
     if (!this.isPlayerTurn(socketId)) {
       return { error: "Таны ээлж биш!!!" };
