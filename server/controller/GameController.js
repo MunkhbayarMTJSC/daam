@@ -3,9 +3,12 @@ import {
   selectPiece,
   makeMove,
 } from "../service/GameService.js";
-export default function GameController(socket, io, rooms) {
+
+import { getRoomByCode } from "../game/RoomManager.js";
+export default function GameController(socket, io) {
   socket.on("requestBoardState", (roomCode) => {
-    const result = getBoardstate(roomCode, rooms);
+    const room = getRoomByCode(roomCode);
+    const result = getBoardstate(room);
     if (!result) {
       console.log("Error: Өрөө олдсонгүй!");
       return;
@@ -14,14 +17,14 @@ export default function GameController(socket, io, rooms) {
   });
   // Хүү сонгоход серверт хандаж highlight хийх
   socket.on("selectedPiece", ({ roomCode, pieceId }) => {
-    const result = selectPiece(socket.id, roomCode, pieceId, rooms);
+    const room = getRoomByCode(roomCode);
+    const result = selectPiece(socket.id, pieceId, room);
     socket.emit("highlightMoves", result); // ➡️ зөвхөн тухайн тоглогч руу буцаах
   });
   // Тоглогчийн нүүдэл ирэхэд ахих
   socket.on("playerMove", ({ roomCode, piece, move }) => {
-    const result = makeMove(socket.id, roomCode, piece, move, rooms);
-
-    const room = rooms[roomCode];
+    const room = getRoomByCode(roomCode);
+    const result = makeMove(socket.id, piece, move, room);
     for (const id of room.players) {
       io.to(id).emit("updateBoard", result);
     }

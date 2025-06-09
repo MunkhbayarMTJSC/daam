@@ -1,24 +1,22 @@
-import GameRooms from "../game/GameRooms.js"; // GameRoom загвар чинь энд ашиглагдана
+// server/service/RoomService.js
+import {
+  createRoom as createRoomInstance,
+  getRoomByCode,
+  deleteRoom,
+  getAllRooms,
+  getRoomBySocketId,
+} from "../game/RoomManager.js";
 
 const RoomService = {
-  createRoom(socket, io, rooms) {
-    let roomCode = 898989; // түр хэрэглээ
-    const room = new GameRooms(roomCode);
-    room.addPlayer(socket.id);
-    rooms[roomCode] = room;
-
-    socket.join(roomCode);
-    socket.roomCode = roomCode;
+  createRoom(socket, io) {
+    const { room, roomCode } = createRoomInstance(socket, io);
     const color = room.getPlayerColor(socket.id);
-
-    console.log(`🆕 Room created: ${roomCode}`);
     socket.emit("roomCreated", { roomCode, color });
+    console.log(`🆕 Room created: ${roomCode}`);
   },
 
-  joinRoom(socket, io, rooms, roomCode) {
-    const room = rooms[roomCode];
-    socket.roomCode = roomCode;
-
+  joinRoom(socket, io, roomCode) {
+    const room = getRoomByCode(roomCode);
     if (!room || room.players.length >= 2) {
       socket.emit("errorMessage", "Өрөө олдсонгүй эсвэл дүүрэн байна!");
       return;
@@ -31,6 +29,7 @@ const RoomService = {
     }
 
     socket.join(roomCode);
+    socket.roomCode = roomCode;
     console.log(`👥 Player joined room: ${roomCode}`);
 
     if (room.players.length === 2) {
@@ -51,35 +50,36 @@ const RoomService = {
     }
   },
 
-  leaveRoom(socket, io, rooms, roomCode) {
-    const room = rooms[roomCode];
+  leaveRoom(socket, io, roomCode) {
+    const room = getRoomByCode(roomCode);
     if (!room) return;
 
     room.removePlayer(socket.id);
     socket.leave(roomCode);
 
     if (room.players.length === 0) {
-      delete rooms[roomCode];
+      deleteRoom(roomCode);
       console.log(`❌ Room deleted: ${roomCode}`);
     } else {
       io.to(roomCode).emit("opponentLeft");
     }
   },
 
-  handleDisconnect(socket, io, rooms) {
-    for (const [roomCode, room] of Object.entries(rooms)) {
-      const idx = room.players.indexOf(socket.id);
-      if (idx !== -1) {
-        room.players.splice(idx, 1);
-        if (room.players.length === 0) {
-          delete rooms[roomCode];
-          console.log(`❌ Room deleted: ${roomCode}`);
-        } else {
-          io.to(roomCode).emit("opponentLeft");
-        }
-        break;
-      }
+  handleDisconnect(socket, io) {
+    const roomEntry = getRoomBySocketId(socket.id);
+    if (!roomEntry) return;
+
+    const [roomCode, room] = roomEntry;
+    room.removePlayer(socket.id);
+    socket.leave(roomCode);
+
+    if (room.players.length === 0) {
+      deleteRoom(roomCode);
+      console.log(`❌ Room deleted: ${roomCode}`);
+    } else {
+      io.to(roomCode).emit("opponentLeft");
     }
+
     console.log(`🔌 Client disconnected: ${socket.id}`);
   },
 };

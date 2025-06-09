@@ -4,6 +4,7 @@ import Phaser from "phaser";
 import BoardView from "../classes/BoardView.js";
 import Pieces from "../classes/PiecesView.js";
 import UIOverlay from "../utils/UIOverlay.js";
+import { loadAndShowProfile, circleProfileImg } from "./uiHelpers.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -27,6 +28,34 @@ export default class GameScene extends Phaser.Scene {
     this.currentTurn = 0;
     this.board.draw(width, height);
     const homeBtn = this.add.image(width * 0.065, height * 0.03, "homeBtn");
+    console.log(this.roomCode, this.socket);
+    this.socket.emit("requestPlayerInfo", this.roomCode, ({ players }) => {
+      console.log("Өрсөлдөгчийн мэдээлэл:", players[0].proImgURL);
+      console.log("Өрсөлдөгчийн мэдээлэл:", players[1].proImgURL);
+      // Enemy
+      let position = {
+        x: width * 0.89,
+        y: height * 0.21,
+      };
+      this.add.text(width * 0.6, height * 0.205, players[1].username, {
+        fontSize: "14px",
+        fill: "#fff",
+        fontFamily: "MongolFont", // ← энд фонтын нэр
+      });
+      circleProfileImg(this, players[1].proImgURL, 32, position);
+      // Me
+      position = {
+        x: width * 0.11,
+        y: height * 0.855,
+      };
+      this.add.text(width * 0.18, height * 0.85, players[0].username, {
+        fontSize: "14px",
+        fill: "#fff",
+        fontFamily: "MongolFont", // ← энд фонтын нэр
+      });
+      circleProfileImg(this, players[0].proImgURL, 32, position);
+    });
+
     homeBtn.setScale(0.35);
     homeBtn.setOrigin(0.5);
     homeBtn.setInteractive().on("pointerdown", () => {

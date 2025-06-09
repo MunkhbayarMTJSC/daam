@@ -1,5 +1,4 @@
-export function getBoardstate(roomCode, rooms) {
-  const room = rooms[roomCode];
+export function getBoardstate(room) {
   if (!room) return null;
   return {
     pieces: room.gameLogic.pieces,
@@ -7,8 +6,7 @@ export function getBoardstate(roomCode, rooms) {
     movablePieces: room.gameLogic.currentMovablePieces,
   };
 }
-export function selectPiece(playerId, roomCode, pieceId, rooms) {
-  const room = rooms[roomCode];
+export function selectPiece(playerId, pieceId, room) {
   if (!room) return;
 
   const color = room.getPlayerColor(playerId);
@@ -31,8 +29,7 @@ export function selectPiece(playerId, roomCode, pieceId, rooms) {
   };
 }
 
-export function makeMove(playerId, roomCode, piece, move, rooms) {
-  const room = rooms[roomCode];
+export function makeMove(playerId, piece, move, room) {
   if (!room) {
     socket.emit("errorMessage", "Өрөө олдсонгүй!");
     return;

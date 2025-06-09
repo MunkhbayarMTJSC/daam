@@ -30,4 +30,14 @@ async function recordGameResult(userId, won) {
   return player;
 }
 
-export { findOrCreatePlayer, addXp, recordGameResult };
+function getPlayerInfosFromRoom(roomCode) {
+  const room = getRoomByCode(roomCode);
+  if (!room) return null;
+
+  return room.players.map((p) => ({
+    username: p.username,
+    profileImageURL: p.profileImageURL || "https://yourdomain.com/default.png",
+  }));
+}
+
+export { findOrCreatePlayer, addXp, recordGameResult, getPlayerInfosFromRoom };

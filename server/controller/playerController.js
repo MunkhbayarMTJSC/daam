@@ -3,6 +3,7 @@ import {
   addXp,
   recordGameResult,
 } from "../service/PlayerService.js";
+import { getRoomByCode } from "../game/RoomManager.js";
 
 export default function handlePlayerSocket(socket, io) {
   socket.on("playerConnected", async (data) => {
@@ -19,6 +20,7 @@ export default function handlePlayerSocket(socket, io) {
         gamesPlayed: player.gamesPlayed,
         gamesWon: player.gamesWon,
         createdAt: player.createdAt,
+        proImgURL: player.avatarUrl || "https://yourdomain.com/default.png",
       };
       socket.emit("playerDataLoaded", player);
     } catch (err) {
@@ -26,11 +28,6 @@ export default function handlePlayerSocket(socket, io) {
       socket.emit("errorMessage", "Player connection failed.");
     }
   });
-
-  if (!socket.player) {
-    return socket.emit("errorMessage", "Player not connected.");
-  } else {
-  }
 
   socket.on("addXp", async (amount) => {
     if (!socket.player) {
@@ -53,5 +50,31 @@ export default function handlePlayerSocket(socket, io) {
     } catch (err) {
       console.error("Game result error:", err);
     }
+  });
+  socket.on("requestPlayerInfo", (roomCode, callback) => {
+    const room = getRoomByCode(roomCode);
+
+    if (!room) {
+      return callback({ players: [] });
+    }
+
+    const players = room.players.map((socketId) => {
+      const playerSocket = io.sockets.sockets.get(socketId); // Socket-ийг ID-аар авна
+      if (playerSocket && playerSocket.player) {
+        return {
+          username: playerSocket.player.username,
+          proImgURL:
+            playerSocket.player.proImgURL ||
+            "https://yourdomain.com/default.png",
+        };
+      } else {
+        return {
+          username: "Unknown",
+          proImgURL: "https://yourdomain.com/default.png",
+        };
+      }
+    });
+
+    callback({ players });
   });
 }

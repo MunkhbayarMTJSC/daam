@@ -20,13 +20,8 @@ export default class GameRooms {
 
   addPlayer(socketId) {
     if (this.players.length >= 2) return false;
-
     this.players.push(socketId);
-
-    // ☑️ Шууд өнгө оноох
-    const color = this.players.length === 1 ? 0 : 1; // Эхний хүн бол цагаан (1), дараагийнх нь хар (0)
-    this.playerColors[socketId] = color;
-
+    this.playerColors[socketId] = this.players.length === 1 ? 0 : 1;
     return true;
   }
 
@@ -42,28 +37,20 @@ export default class GameRooms {
   }
 
   handleMove(socketId, pieceData, moveData) {
-    if (!this.isPlayerTurn(socketId)) {
-      return { error: "Таны ээлж биш!!!" };
-    }
+    if (!this.isPlayerTurn(socketId)) return { error: "Таны ээлж биш!" };
 
     const piece = this.gameLogic.getPieceAt(
       pieceData.fromRow,
       pieceData.fromCol
     );
-    if (!piece) {
-      return { error: "Нүүдэл хийх чулуу олдсонгүй!" };
-    }
+    if (!piece) return { error: "Чулуу олдсонгүй!" };
 
     const validMoves = this.gameLogic.getValidMoves(piece);
     const selectedMove = validMoves.find(
       (m) => m.row === moveData.toRow && m.col === moveData.toCol
     );
+    if (!selectedMove) return { error: "Буруу нүүдэл!" };
 
-    if (!selectedMove) {
-      return { error: "Буруу нүүдэл!" };
-    }
-
-    // Чулууг хөдөлгөнө (устгах логик дотор нь байгаа)
     this.gameLogic.movePieceTo(
       piece,
       moveData.toRow,
@@ -71,7 +58,6 @@ export default class GameRooms {
       this.currentTurn
     );
 
-    // Дараагийн идэлт байгаа эсэхийг шалгаад ээлжийг солих
     if (!this.gameLogic.currentValidMoves) {
       this.currentTurn = 1 - this.currentTurn;
     }
