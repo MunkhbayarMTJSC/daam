@@ -1,18 +1,31 @@
-import Player from "../model/Player.js";
+import Player from '../model/Player.js';
 
 async function findOrCreatePlayer({ userId, username, avatarUrl }) {
-  let player = await Player.findOne({ userId });
-  if (!player) {
+  try {
+    // Эхлээд хайна
+    let player = await Player.findOne({ userId });
+    if (player) return player;
+
+    // Хэрвээ байхгүй бол үүсгэнэ
     player = new Player({ userId, username, avatarUrl });
     await player.save();
     console.log(`🆕 New player registered: ${username}`);
+    return player;
+  } catch (err) {
+    // Duplicate алдааг дахин шалгана
+    if (err.code === 11000) {
+      // Нэгэн зэрэг хоёр холболт орж ирсэн тохиолдол — давхар insert үүссэн
+      console.warn(`⚠️ Duplicate insert race condition for userId: ${userId}`);
+      return await Player.findOne({ userId }); // Дахин уншина
+    } else {
+      throw err; // Бусад алдааг шууд шиднэ
+    }
   }
-  return player;
 }
 
 async function addXp(userId, amount) {
   const player = await Player.findOne({ userId });
-  if (!player) throw new Error("Player not found");
+  if (!player) throw new Error('Player not found');
 
   player.xp += amount;
 
@@ -21,7 +34,7 @@ async function addXp(userId, amount) {
 }
 async function recordGameResult(userId, won) {
   const player = await Player.findOne({ userId });
-  if (!player) throw new Error("Player not found");
+  if (!player) throw new Error('Player not found');
 
   player.gamesPlayed++;
   if (won) player.gamesWon++;
@@ -36,7 +49,7 @@ function getPlayerInfosFromRoom(roomCode) {
 
   return room.players.map((p) => ({
     username: p.username,
-    profileImageURL: p.profileImageURL || "https://yourdomain.com/default.png",
+    profileImageURL: p.profileImageURL || 'https://yourdomain.com/default.png',
   }));
 }
 

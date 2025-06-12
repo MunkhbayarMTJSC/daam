@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Mission from "./model/Mission.js";
 
 await mongoose.connect(
-  "mongodb://mongo:lmIwBZZfLxYhnfBZNDQURuLHgjDzukva@ballast.proxy.rlwy.net:46701"
+  "mongodb://localhost:27017/checkers"
 );
 await Mission.insertMany([
   {

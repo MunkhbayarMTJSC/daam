@@ -1,6 +1,6 @@
-import GameConfig from "../utils/GameConfig.js";
+import GameConfig from '../utils/GameConfig.js';
 export default class BoardView {
-  constructor(scene, tileSize = 41, boardSize = 10) {
+  constructor(scene, tileSize = 40, boardSize = 10) {
     this.scene = scene;
     this.tiles = [];
     this.tileSize = tileSize;
@@ -21,7 +21,7 @@ export default class BoardView {
     this.centerX = centerX;
     this.centerY = centerY;
     this.boardImage = this.scene.add
-      .image(width / 2, height / 2, "board")
+      .image(width / 2, height / 2, 'board')
       .setDisplaySize(width, height);
   }
   getTransformedRow(row) {

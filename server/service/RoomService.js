@@ -4,27 +4,27 @@ import {
   getRoomByCode,
   deleteRoom,
   getAllRooms,
-  getRoomBySocketId,
-} from "../game/RoomManager.js";
+  getRoomByPlayer,
+} from '../game/RoomManager.js';
 
 const RoomService = {
   createRoom(socket, io) {
     const { room, roomCode } = createRoomInstance(socket, io);
     const color = room.getPlayerColor(socket.id);
-    socket.emit("roomCreated", { roomCode, color });
+    socket.emit('roomCreated', { roomCode, color });
     console.log(`🆕 Room created: ${roomCode}`);
   },
 
   joinRoom(socket, io, roomCode) {
     const room = getRoomByCode(roomCode);
     if (!room || room.players.length >= 2) {
-      socket.emit("errorMessage", "Өрөө олдсонгүй эсвэл дүүрэн байна!");
+      socket.emit('errorMessage', 'Өрөө олдсонгүй эсвэл дүүрэн байна!');
       return;
     }
 
     const added = room.addPlayer(socket.id);
     if (!added) {
-      socket.emit("errorMessage", "Өрөө дүүрсэн байна!");
+      socket.emit('errorMessage', 'Өрөө дүүрсэн байна!');
       return;
     }
 
@@ -41,7 +41,7 @@ const RoomService = {
 
       room.players.forEach((playerId) => {
         const color = room.getPlayerColor(playerId);
-        io.to(playerId).emit("roomJoined", {
+        io.to(playerId).emit('roomJoined', {
           roomCode,
           color,
           ...result,
@@ -61,26 +61,34 @@ const RoomService = {
       deleteRoom(roomCode);
       console.log(`❌ Room deleted: ${roomCode}`);
     } else {
-      io.to(roomCode).emit("opponentLeft");
+      io.to(roomCode).emit('opponentLeft');
     }
   },
 
   handleDisconnect(socket, io) {
-    const roomEntry = getRoomBySocketId(socket.id);
-    if (!roomEntry) return;
+    const room = getRoomByPlayer(socket.id, socket.roomCode);
+    if (!room) return;
 
-    const [roomCode, room] = roomEntry;
+    // 🔸 Disconnect болсон тоглогчийг тэмдэглэ
     room.removePlayer(socket.id);
-    socket.leave(roomCode);
 
-    if (room.players.length === 0) {
-      deleteRoom(roomCode);
-      console.log(`❌ Room deleted: ${roomCode}`);
-    } else {
-      io.to(roomCode).emit("opponentLeft");
+    // 🔸 Сэргээхэд зориулж тоглоомын төлөв хадгалах (хэрвээ шаардлагатай бол)
+    const saveData = room.getSaveData();
+    // Та хүсвэл энэ saveData-г файл эсвэл DB-д хадгалах боломжтой
+
+    // 🔸 Нөгөө тоглогчид мэдэгдэл илгээх
+    for (const playerId of room.players) {
+      io.to(playerId).emit('playerDisconnected', {
+        playerId: socket.id,
+        message: 'Тоглогч тоглоомоос гарсан байна.',
+      });
     }
 
-    console.log(`🔌 Client disconnected: ${socket.id}`);
+    // 🔸 Хэрвээ өрөөнд огт хүн үлдээгүй бол устгах
+    if (room.players.length === 0) {
+      deleteRoom(room.roomCode);
+      console.log(`[Room ${room.roomCode}] Хоосорсон тул устлаа.`);
+    }
   },
 };
 

@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
-dotenv.config({ path: ".env.production" });
+const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
+
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 
 import express from "express";
 import http from "http";
@@ -39,9 +41,9 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server listening on ${PORT}`);
 });
-// ✔️ ОРЧИНГ ялгах
-const isProd = process.env.NODE_ENV === "production";
+// ✔️ ОРЧИНГ ялгахconst PORT = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI;
+
 
 mongoose
   .connect(mongoURI)

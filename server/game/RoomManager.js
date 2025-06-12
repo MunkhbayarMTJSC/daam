@@ -1,11 +1,11 @@
 // server/state/RoomManager.js
-import GameRooms from "../game/GameRooms.js";
+import GameRooms from '../game/GameRooms.js';
 
 const rooms = {};
 
 function generateRoomCode() {
-  // return Math.floor(100000 + Math.random() * 900000).toString();
-  return 898989;
+  return Math.floor(100000 + Math.random() * 900000).toString();
+  //return 898989;
 }
 
 function createRoom(socket, io) {
@@ -37,6 +37,15 @@ function getRoomBySocketId(socketId) {
     room.players.includes(socketId)
   );
 }
+function getRoomByPlayer(socketId, roomCode) {
+  const room = rooms[roomCode];
+  if (!room) return null; // ✅ өрөө байгаа эсэхийг шалгана
+
+  if (room.players.includes(socketId)) {
+    return room;
+  }
+  return null;
+}
 
 export {
   createRoom,
@@ -44,4 +53,5 @@ export {
   deleteRoom,
   getAllRooms,
   getRoomBySocketId,
+  getRoomByPlayer,
 };
