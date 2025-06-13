@@ -19,13 +19,18 @@ export default function GameController(socket, io) {
   socket.on('selectedPiece', ({ roomCode, pieceId }) => {
     const room = getRoomByCode(roomCode);
     const result = selectPiece(socket.id, pieceId, room);
+    for (const id of room.players) {
+      io.to(id).emit('clearHighlightMovePath');
+    }
     socket.emit('highlightMoves', result); // ➡️ зөвхөн тухайн тоглогч руу буцаах
   });
   // Тоглогчийн нүүдэл ирэхэд ахих
   socket.on('playerMove', ({ roomCode, piece, moveChain }) => {
     const room = getRoomByCode(roomCode);
     const result = makeMove(socket.id, piece, moveChain, room);
-
+    for (const id of room.players) {
+      io.to(id).emit('highlightMovePath', { piece, moveChain });
+    }
     for (const id of room.players) {
       io.to(id).emit('updateBoard', result);
     }
