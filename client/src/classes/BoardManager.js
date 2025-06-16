@@ -12,7 +12,6 @@ export default class BoardView {
   }
 
   draw(width, height) {
-    console.log(this.tileSize);
     const { offsetX, offsetY, centerX, centerY } = GameConfig.getBoardOffsets(
       this.scene
     );

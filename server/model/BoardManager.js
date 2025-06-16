@@ -1,4 +1,4 @@
-export default class Board {
+export default class BoardManager {
   constructor(size = 10) {
     this.tiles = [];
     this.size = size;

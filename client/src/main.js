@@ -1,10 +1,10 @@
-import Phaser from "phaser";
-import GameScene from "./scenes/GameScene.js";
-import MainScene from "./scenes/MainScene.js";
-import PlayWithFriend from "./scenes/PlayWithFriend.js";
-import PreloadScene from "./scenes/PreloadScene.js";
+import Phaser from 'phaser';
+import MainLobby from './scenes/MainLobby';
+import PreloadScene from './scenes/PreloadScene';
+import FriendLobby from './scenes/FriendLobby';
+import GameScene from './scenes/GameScene';
 
-//const socket = io("http://localhost:3000"); // сервертэй холбох
+const gameCanvas = document.getElementById('gameCanvas');
 
 const config = {
   type: Phaser.WEBGL,
@@ -12,13 +12,12 @@ const config = {
   height: 740,
   canvas: gameCanvas,
   scale: {
-    mode: Phaser.Scale.FIT, // ✅ дэлгэцэнд тааруулж сунгах
-    autoCenter: Phaser.Scale.CENTER_BOTH, // ✅ canvas-ийг төвд нь байрлуулах
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [PreloadScene, MainScene, PlayWithFriend, GameScene],
+  scene: [PreloadScene, MainLobby, FriendLobby, GameScene],
 };
 
 const game = new Phaser.Game(config);
 
-// LobbyScene эхлүүлж socket дамжуулна
-game.scene.start("MainScene");
+game.scene.start('MainLobby');

@@ -1,13 +1,11 @@
-// server/rooms/GameRooms.js
-import GameLogic from './GameLogic.js';
-import Board from '../model/BoardManager.js';
-
-export default class GameRooms {
+import GameLogic from '../logic/GameLogic.js';
+import BoardManager from '../model/BoardManager.js';
+export default class GameRoom {
   constructor(roomCode, io) {
     this.roomCode = roomCode;
-    this.players = [];
-    this.board = new Board();
     this.io = io;
+    this.board = new BoardManager();
+    this.players = [];
     this.currentTurn = 1;
     this.playerColors = {};
     this.moveHistory = [];
@@ -16,29 +14,62 @@ export default class GameRooms {
     this.gameEndedAt = null;
     this.winner = null;
     this.gameLogic = new GameLogic(this.board, (winner) => {
-      this.io.to(this.roomCode).emit('gameEnded', { winner });
+      this.gameEndedAt = Date.now();
+
+      const duration = this.gameEndedAt - this.gameStartedAt;
+      const formatetDuration = this.formatDuration(duration);
+      for (const id of this.players) {
+        io.to(id).emit('gameEnded', {
+          winner,
+          formatetDuration,
+          moveCount: this.moveHistory.length,
+          playerColors: this.playerColors,
+        });
+      }
     });
-
-    this.gameLogic.startGame();
+  }
+  addPlayer(socket, { userId, username, avatarUrl }) {
+    const socketId = socket.id;
+    this.playerColors[socketId] = this.players.length === 0 ? 0 : 1;
+    this.players.push({
+      socketId: socket.id,
+      userId,
+      username,
+      avatarUrl,
+      isHost: this.players.length === 0,
+      ready: false,
+    });
+    socket.join(this.roomCode);
+  }
+  hasPlayer(socketId) {
+    return this.players.some((p) => p.socketId === socketId);
   }
 
-  addPlayer(socketId) {
-    if (this.players.length >= 2) return false;
-    this.players.push(socketId);
-    this.playerColors[socketId] = this.players.length === 1 ? 0 : 1;
-    return true;
+  isFull() {
+    return this.players.length >= 2;
   }
-
-  removePlayer(socketId) {
-    const idx = this.players.indexOf(socketId);
-    if (idx !== -1) {
-      this.players.splice(idx, 1);
+  setReady(socketId) {
+    const player = this.players.find((p) => p.socketId === socketId);
+    if (player) {
+      player.ready = true;
     }
-    this.disconnectedAt[socketId] = Date.now();
+  }
+  getPlayerList() {
+    return this.players.map((player) => ({
+      username: player.username,
+      isHost: player.isHost,
+      avatarUrl: player.avatarUrl,
+      ready: player.ready,
+      socketId: player.socketId,
+    }));
   }
 
+  areBothReady() {
+    return this.players.length === 2 && this.players.every((p) => p.ready);
+  }
   isPlayerTurn(socketId) {
-    return this.players[this.currentTurn] === socketId;
+    const currentPlayer = this.players[this.currentTurn];
+    return currentPlayer.socketId === socketId;
   }
 
   handleMove(socketId, pieceData, moveChain) {
@@ -54,7 +85,6 @@ export default class GameRooms {
       this.chainsMatch(chain, moveChain)
     );
     if (!matchedChain) return { error: 'Буруу нүүдлийн дараалал!' };
-
     const isCapture = matchedChain.some((step) => step.captured);
 
     let chaining = false;
@@ -65,10 +95,9 @@ export default class GameRooms {
         this.currentTurn
       );
     } else {
-      this.gameLogic.moveSimple(piece, matchedChain[0]); // simple move has 1 step
+      this.gameLogic.moveSimple(piece, matchedChain[0], this.currentTurn);
     }
 
-    // ✅ НҮҮДЛИЙН ТҮҮХЭД БҮРТГЭХ хэсэг
     this.moveHistory.push({
       pieceId: piece.id,
       path: matchedChain.map(({ row, col }) => ({ row, col })),
@@ -79,11 +108,26 @@ export default class GameRooms {
     if (!chaining) this.currentTurn = 1 - this.currentTurn;
 
     const movablePieces = this.gameLogic.updateMovablePieces(this.currentTurn);
+    const capturedCounts = this.calculateCapturedCounts();
+    console.log('Captured ', capturedCounts);
     return {
       pieces: this.gameLogic.pieceManager.pieces,
       currentTurn: this.currentTurn,
       chaining: this.gameLogic.currentValidMoves !== null,
       movablePieces,
+      capturedCounts,
+      isCapture,
+      pieceMoved: true,
+    };
+  }
+
+  calculateCapturedCounts() {
+    const player1Pieces = this.gameLogic.pieceManager.getAllByColor(0);
+    const player2Pieces = this.gameLogic.pieceManager.getAllByColor(1);
+
+    return {
+      0: 20 - player1Pieces.length,
+      1: 20 - player2Pieces.length,
     };
   }
 
@@ -96,9 +140,9 @@ export default class GameRooms {
     }
     return true;
   }
-
-  getPlayerColor(socketId) {
-    return this.playerColors[socketId] ?? null;
+  getPlayerColor(socket) {
+    const result = this.playerColors[socket.id] ?? null;
+    return result;
   }
   getSaveData() {
     return {
@@ -130,5 +174,14 @@ export default class GameRooms {
     this.winner = data.winner;
     this.gameStartedAt = data.gameStartedAt;
     this.gameEndedAt = data.gameEndedAt;
+  }
+  broadcast(event, payload) {
+    this.io.to(this.roomCode).emit(event, payload);
+  }
+  formatDuration(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes} мин ${seconds} сек`;
   }
 }

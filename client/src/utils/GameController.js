@@ -31,8 +31,6 @@ export default class GameController {
       Array.isArray(movablePieces) ? movablePieces.map((p) => p.id) : []
     );
 
-    console.log('object :>> ', movablePieces);
-
     for (const piece of movablePieces) {
       const sprite = this.pieceManager.getPieceSpriteAt(piece.id);
       if (!sprite) continue;
@@ -72,7 +70,7 @@ export default class GameController {
 
     const moveStep = (index) => {
       if (index >= chain.length) {
-        if (onComplete) onComplete(); // ✅ Анимэйшн дууссан үед
+        if (onComplete) onComplete();
         return;
       }
 
@@ -116,7 +114,6 @@ export default class GameController {
   sendMove(piece, chain) {
     this.showHighlighter.highlightMovePath(chain, piece);
     this.showHighlighter.clearHighlights();
-
     this.scene.socket.emit('playerMove', {
       roomCode: this.scene.roomCode,
       piece: {

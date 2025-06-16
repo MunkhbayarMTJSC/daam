@@ -1,4 +1,4 @@
-export class PieceManager {
+export class PiecesManager {
   constructor(board) {
     this.board = board;
     this.pieces = [];
@@ -26,6 +26,9 @@ export class PieceManager {
       isKing: false,
     };
     this.pieces.push(piece);
+  }
+  clearPieces() {
+    this.pieces = [];
   }
 
   getPieceAt(row, col) {

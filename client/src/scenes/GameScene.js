@@ -1,127 +1,121 @@
-// client/src/scenes/GameScene.js
-
-import Phaser from 'phaser';
+import ReadyPopup from '../ui/ReadyPopup';
 import BoardManager from '../classes/BoardManager.js';
 import PieceManager from '../classes/PieceManager.js';
 import GameController from '../utils/GameController.js';
 import ShowHighlighter from '../classes/ShowHighlighter.js';
-import UIOverlay from '../utils/UIOverlay.js';
-import { loadAndShowProfile, circleProfileImg } from './uiHelpers.js';
-
+import GameSocketHandlers from '../network/GameSocketHandlers';
+import { circleProfileImg } from '../ui/uiHelpers';
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
   }
+
   init(data) {
     this.socket = data.socket;
     this.roomCode = data.roomCode;
-    this.isHost = data.isHost;
+    this.username = data.username;
     this.playerColor = data.color;
-    this.allData = data.allData;
+    this.players = data.players;
+    this.readyPlayers = {};
+  }
+  preload() {
+    this.load.audio('moveSound', '/assets/audio/move.wav');
+    this.load.audio('captureSound', '/assets/audio/capture.wav');
   }
 
-  preload() {}
-
   create() {
+    const bg = this.sound.get('bgMusic');
+    if (bg && bg.isPlaying) {
+      bg.stop();
+    }
+
+    this.moveSound = this.sound.add('moveSound');
+    this.captureSound = this.sound.add('captureSound');
+    this.cameras.main.fadeIn(500);
     this.currentTurn = 1;
     const { width, height } = this.scale;
-    this.board = new BoardManager(this);
-    this.ui = new UIOverlay(this);
-    this.pieceManager = new PieceManager(this, this.board, this.playerColor);
+    this.boardManager = new BoardManager(this);
+    this.pieceManager = new PieceManager(
+      this,
+      this.boardManager,
+      this.playerColor
+    );
     this.showHighligher = new ShowHighlighter(
       this,
-      this.board,
+      this.boardManager,
       this.pieceManager,
       this.currentTurn
     );
     this.gameController = new GameController(
       this,
-      this.board,
+      this.boardManager,
       this.pieceManager,
       this.playerColor,
       this.showHighligher
     );
-
-    this.board.draw(width, height);
+    this.boardManager.draw(width, height);
+    this.boardManager.setPlayerColor(this.playerColor);
     const homeBtn = this.add.image(width * 0.065, height * 0.03, 'homeBtn');
     homeBtn.setScale(0.35);
     homeBtn.setOrigin(0.5);
     homeBtn.setInteractive().on('pointerdown', () => {
       if (this.socket) {
         this.socket.emit('leaveRoom', this.roomCode);
-        this.scene.start('MainScene', this.socket);
+        this.scene.start('MainLobby', this.socket);
       } else {
         console.warn('⚠ socket is undefined!');
       }
     });
-    this.socket.emit('requestPlayerInfo', this.roomCode, ({ players }) => {
-      // Enemy
-      let position = {
-        x: width * 0.89,
-        y: height * 0.21,
-      };
-      this.add.text(width * 0.6, height * 0.205, players[1].username, {
-        fontSize: '14px',
-        fill: '#fff',
-        fontFamily: 'MongolFont', // ← энд фонтын нэр
-      });
-      circleProfileImg(this, players[1].proImgURL, 32, position);
-      // Me
-      position = {
-        x: width * 0.11,
-        y: height * 0.855,
-      };
-      this.add.text(width * 0.18, height * 0.85, players[0].username, {
-        fontSize: '14px',
-        fill: '#fff',
-        fontFamily: 'MongolFont', // ← энд фонтын нэр
-      });
-      circleProfileImg(this, players[0].proImgURL, 32, position);
-    });
-    this.socket.on('playerDisconnected', (data) => {
-      this.add.text(width / 2, height / 2, data.message, {
-        fontSize: '14px',
-        fill: '#fff',
-        fontFamily: 'MongolFont', // ← энд фонтын нэр
-      });
-    });
+    this.readyPopup = new ReadyPopup(
+      this,
+      width / 2,
+      height / 2,
+      this.socket,
+      this.roomCode,
+      this.players
+    );
+    this.socket.off('bothReadyImg');
+    this.socket.on('bothReadyImg', (players) => {
+      const mySocketId = this.socket.id;
+      const selfPlayer = players.find((p) => p.socketId === mySocketId);
+      const opponentPlayer = players.find((p) => p.socketId !== mySocketId);
+      if (selfPlayer) {
+        const pos = {
+          x: width * 0.09,
+          y: height * 0.86,
+        };
+        circleProfileImg(this, selfPlayer.avatarUrl, 32, pos);
 
-    this.socket.off('updateBoard'); // өмнөх бүртгэлийг устгах
-
-    this.socket.on('updateBoard', (data) => {
-      this.currentTurn = data.currentTurn;
-      this.gameController.showMovablePieces(
-        data.pieces,
-        data.currentTurn,
-        data.movablePieces
-      );
-    });
-    this.board.setPlayerColor(this.playerColor); // 0 эсвэл 1
-
-    this.socket.on('gameEnded', ({ winner }) => {
-      this.scene.start('MainScene', { winner });
-    });
-    this.socket.emit('requestBoardState', this.roomCode);
-
-    this.events.once('shutdown', () => {
-      // Бүх profile элементүүдийг устгах
-      if (this.profileElements) {
-        this.profileElements.forEach((el) => {
-          if (el && el.destroy) el.destroy();
-        });
-        this.profileElements = null;
+        this.add
+          .text(width * 0.29, height * 0.86, selfPlayer.username, {
+            fontSize: '14px',
+            color: '#ffffff',
+            fontFamily: 'MongolFont',
+          })
+          .setOrigin(0.5);
       }
+      if (opponentPlayer) {
+        const pos = {
+          x: width * 0.9,
+          y: height * 0.2,
+        };
+        circleProfileImg(this, opponentPlayer.avatarUrl, 32, pos);
 
-      // Texture-г устгах (WebGL дотор устгах шаардлагатай)
-      if (this.textures.exists('profileImage')) {
-        this.textures.remove('profileImage');
-      }
-
-      // Socket listener-уудыг салгах
-      if (this.socket) {
-        this.socket.removeAllListeners('updateBoard');
-        this.socket.removeAllListeners('gameEnded');
+        this.add
+          .text(width * 0.7, height * 0.2, opponentPlayer.username, {
+            fontSize: '14px',
+            color: '#ffffff',
+            fontFamily: 'MongolFont',
+          })
+          .setOrigin(0.5);
       }
     });
+
+    GameSocketHandlers(
+      this,
+      this.currentTurn,
+      this.gameController,
+      this.playerColor
+    );
   }
 }

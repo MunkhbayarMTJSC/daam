@@ -1,44 +1,50 @@
-import {
-  getBoardstate,
-  selectPiece,
-  makeMove,
-} from '../service/GameService.js';
-
-import { getRoomByCode } from '../game/RoomManager.js';
-export default function GameController(socket, io) {
-  socket.on('requestBoardState', (roomCode) => {
-    const room = getRoomByCode(roomCode);
-    const result = getBoardstate(room);
-    if (!result) {
+export default function GameController(socket, io, rooms) {
+  // Game Start
+  socket.on('startGame', (roomCode) => {
+    const room = rooms.getRoom(roomCode);
+    const data = {
+      pieces: room.gameLogic.pieceManager.pieces,
+      currentTurn: room.currentTurn,
+      movablePieces: room.gameLogic.currentMovablePieces,
+      pieceMoved: false,
+    };
+    if (!data) {
       console.log('Error: Өрөө олдсонгүй!');
       return;
     }
-    socket.emit('updateBoard', result);
+    const players = room.getPlayerList();
+    io.to(roomCode).emit('bothReadyImg', players);
+    socket.emit('updateBoard', data);
   });
-  // Хүү сонгоход серверт хандаж highlight хийх
+  // Game Reset
+  // Selection
   socket.on('selectedPiece', ({ roomCode, pieceId }) => {
-    const room = getRoomByCode(roomCode);
-    const result = selectPiece(socket.id, pieceId, room);
-    for (const id of room.players) {
-      io.to(id).emit('clearHighlightMovePath');
+    const room = rooms.getRoom(roomCode);
+    const color = room.getPlayerColor(socket);
+    const piece = room.gameLogic.pieceManager.pieces.find(
+      (p) => p.id === pieceId
+    );
+    if (!piece) {
+      socket.emit('errorMessage', 'Хүү олдсонгүй!');
+      return;
     }
-    socket.emit('highlightMoves', result); // ➡️ зөвхөн тухайн тоглогч руу буцаах
+    if (piece.color !== color) {
+      socket.emit('errorMessage', 'Энэ хүү таных биш!');
+      return;
+    }
+    const moveChains = room.gameLogic.moveCalculator.getValidMoves(piece);
+
+    io.to(roomCode).emit('clearHighlightMovePath');
+    socket.emit('highlightMoves', { piece, moves: moveChains });
   });
   // Тоглогчийн нүүдэл ирэхэд ахих
   socket.on('playerMove', ({ roomCode, piece, moveChain }) => {
-    const room = getRoomByCode(roomCode);
-    const result = makeMove(socket.id, piece, moveChain, room);
-    for (const id of room.players) {
-      io.to(id).emit('highlightMovePath', { piece, moveChain });
-    }
-    for (const id of room.players) {
-      io.to(id).emit('updateBoard', result);
-    }
+    const room = rooms.getRoom(roomCode);
+    const playerId = socket.id;
+    const result = room.handleMove(playerId, piece, moveChain);
+    if (result?.error) return { error: result.error };
+    io.to(roomCode).emit('highlightMovePath', { piece, moveChain });
+    io.to(roomCode).emit('updateBoard', result);
   });
-
-  // Ялагч тодроход
-  socket.on('gameOver', ({ roomCode, winner }) => {
-    console.log('Ялагчийг хүлээж авав', winner);
-    io.to(roomCode).emit('gameEnded', { winner });
-  });
+  // Game over
 }
