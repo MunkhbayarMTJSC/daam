@@ -6,7 +6,9 @@ let socket = null;
 export function initSocket() {
   if (!socket) {
     try {
-      socket = io('http://localhost:3000');
+      socket = io(import.meta.env.VITE_SOCKET_SERVER_URL, {
+        transports: ['polling', 'websocket'],
+      });
     } catch (error) {
       console.error('❌ Socket үүсгэхэд алдаа гарлаа:', error);
     }
