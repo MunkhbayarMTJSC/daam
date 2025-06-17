@@ -18,29 +18,47 @@ export default class GameRoom {
 
       const duration = this.gameEndedAt - this.gameStartedAt;
       const formatetDuration = this.formatDuration(duration);
-      for (const id of this.players) {
-        io.to(id).emit('gameEnded', {
-          winner,
-          formatetDuration,
-          moveCount: this.moveHistory.length,
-          playerColors: this.playerColors,
-        });
-      }
+      io.to(this.roomCode).emit('gameEnded', {
+        winner,
+        formatetDuration,
+        moveCount: this.moveHistory.length,
+        playerColors: this.playerColors,
+        roomCode: this.roomCode,
+      });
     });
   }
   addPlayer(socket, { userId, username, avatarUrl }) {
     const socketId = socket.id;
+
+    const existingPlayer = this.players.find((p) => p.userId === userId);
+    if (existingPlayer) {
+      existingPlayer.socketId = socketId;
+      socket.join(this.roomCode);
+      socket.roomCode = this.roomCode;
+      return;
+    }
+
     this.playerColors[socketId] = this.players.length === 0 ? 0 : 1;
     this.players.push({
-      socketId: socket.id,
+      socketId,
       userId,
       username,
       avatarUrl,
       isHost: this.players.length === 0,
       ready: false,
     });
+
     socket.join(this.roomCode);
+    socket.roomCode = this.roomCode;
   }
+  removePlayer(socketId) {
+    const playerIndex = this.players.findIndex((p) => p.socketId === socketId);
+    if (playerIndex === -1) return;
+    const removedPlayer = this.players.splice(playerIndex, 1)[0];
+    delete this.playerColors[socketId];
+    this.disconnectedAt[socketId] = Date.now();
+  }
+
   hasPlayer(socketId) {
     return this.players.some((p) => p.socketId === socketId);
   }
@@ -147,34 +165,72 @@ export default class GameRoom {
   getSaveData() {
     return {
       roomCode: this.roomCode,
-      players: this.players,
+      players: this.players.map(({ socketId, ...rest }) => rest),
       playerColors: this.playerColors,
       currentTurn: this.currentTurn,
-      pieces: this.gameLogic.pieceManager.pieces, // эсвэл serialize() хэлбэрээр
+      pieces: this.gameLogic.pieceManager.serialize(),
+      movablePieces: this.gameLogic.currentMovablePieces,
       moveHistory: this.moveHistory,
       winner: this.winner,
       gameStartedAt: this.gameStartedAt,
-      gameEndedAt: this.gameEndedAt,
+      board: this.board.serialize(),
     };
   }
   loadFromData(data) {
     this.roomCode = data.roomCode;
-    this.players = data.players;
+    this.players = data.players.map((p) => ({
+      ...p,
+      socketId: null, // 🔁 reconnect үед шинэчилнэ
+    }));
+
     this.playerColors = data.playerColors;
     this.currentTurn = data.currentTurn;
-    this.board = new Board();
-    this.board.deserialize(data.board); // BoardManager дотор deserialize() функц
-
-    this.gameLogic = new GameLogic(this.board, (winner) => {
-      this.io.to(this.roomCode).emit('gameEnded', { winner });
-    });
-    this.gameLogic.pieceManager.pieces = data.pieces; // эсвэл deserialize
-
     this.moveHistory = data.moveHistory;
     this.winner = data.winner;
     this.gameStartedAt = data.gameStartedAt;
     this.gameEndedAt = data.gameEndedAt;
+
+    this.board = new Board();
+    this.board.deserialize(data.board);
+
+    this.gameLogic = new GameLogic(this.board, (winner) => {
+      this.io.to(this.roomCode).emit('gameEnded', { winner });
+    });
+
+    this.gameLogic.pieceManager.deserialize(data.pieces);
   }
+  resetGame() {
+    // 1. Шинэ самбар үүсгэх
+    this.board = new BoardManager();
+
+    // 2. Түүх болон төлвийг дахин тохируулах
+    this.currentTurn = 1;
+    this.moveHistory = [];
+    this.gameEndedAt = null;
+    this.gameStartedAt = Date.now();
+    this.winner = null;
+
+    // 3. Тоглогчдыг not-ready болгох
+    this.players.forEach((p) => {
+      p.ready = false;
+    });
+
+    // 4. GameLogic шинэчилж, winner callback дахин оноох
+    this.gameLogic = new GameLogic(this.board, (winner) => {
+      this.gameEndedAt = Date.now();
+      const duration = this.gameEndedAt - this.gameStartedAt;
+      const formatetDuration = this.formatDuration(duration);
+      this.io.to(this.roomCode).emit('gameEnded', {
+        winner,
+        formatetDuration,
+        moveCount: this.moveHistory.length,
+        playerColors: this.playerColors,
+        roomCode: this.roomCode,
+      });
+    });
+    this.gameLogic.resetGame(this.currentTurn);
+  }
+
   broadcast(event, payload) {
     this.io.to(this.roomCode).emit(event, payload);
   }

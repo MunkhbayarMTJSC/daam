@@ -10,20 +10,19 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
     this.playerTexts = {}; // username -> text map
 
     // Popup background
-    const bg = scene.add.rectangle(0, 0, 300, 200, 0x000000, 0.8);
+    const bg = scene.add.rectangle(0, 0, 350, 300, 0x000000, 0.8);
     bg.setOrigin(0.5);
 
     // Room Code text (saved to this)
     this.roomCodeText = scene.add
-      .text(0, -80, `Room Code: ${roomCode}`, {
-        fontSize: '18px',
+      .text(0, -100, `Room Code: ${roomCode}`, {
+        fontSize: '24px',
         color: '#ffffff',
         fontFamily: 'MongolFont',
         align: 'center',
       })
       .setOrigin(0.5);
 
-    // Player list (saved to this)
     this.playerListText = scene.add
       .text(0, -40, 'Waiting for players...', {
         fontSize: '16px',
@@ -33,9 +32,8 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
       })
       .setOrigin(0.5);
 
-    // Ready button (saved to this)
     this.readyBtn = scene.add
-      .text(0, 50, 'Ready', {
+      .text(0, 70, 'Ready', {
         fontSize: '20px',
         color: '#00ff00',
         fontFamily: 'MongolFont',
@@ -103,8 +101,9 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
     // 🕒 Countdown text
     const countdownText = this.scene.add
       .text(0, 0, count.toString(), {
-        fontSize: '48px',
+        fontSize: '72px',
         color: '#ffffff',
+        fontFamily: 'MongolFont',
       })
       .setOrigin(0.5);
     this.add(countdownText);

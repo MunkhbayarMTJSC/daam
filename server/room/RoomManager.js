@@ -22,8 +22,18 @@ export default class RoomManager {
     room.addPlayer(socket, { userId, username, avatarUrl });
     return room;
   }
+  deleteRoom(code) {
+    this.rooms.delete(code);
+  }
 
   getRoom(code) {
     return this.rooms.get(code);
+  }
+  findRoomByUserId(userId) {
+    for (const room of this.rooms.values()) {
+      const found = room.players.find((p) => p.userId === userId);
+      if (found) return room;
+    }
+    return null;
   }
 }

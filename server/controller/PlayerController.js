@@ -4,10 +4,16 @@ import {
   recordGameResult,
 } from '../service/PlayerService.js';
 
-export default function handlePlayerSocket(socket, io) {
+export default function handlePlayerSocket(socket, io, rooms) {
   socket.on('playerConnected', async (data) => {
     try {
       const player = await findOrCreatePlayer(data);
+      const reconnectRoom = rooms.findRoomByUserId(player.userId);
+      let reconnectRoomCode = null;
+
+      if (reconnectRoom) {
+        reconnectRoomCode = reconnectRoom.roomCode;
+      }
       socket.player = {
         userId: player.userId,
         username: player.username,
@@ -20,8 +26,30 @@ export default function handlePlayerSocket(socket, io) {
         gamesWon: player.gamesWon,
         createdAt: player.createdAt,
         proImgURL: player.avatarUrl || 'https://yourdomain.com/default.png',
+        reconnectRoomCode,
       };
-      socket.emit('playerDataLoaded', player);
+      const safePlayer = player.toObject(); // JSON болгож байна
+      safePlayer.reconnectRoomCode = reconnectRoomCode;
+      socket.emit('playerDataLoaded', safePlayer);
+      // 🔍 Reconnect эсэхийг шалгах хэсэг
+      const room = rooms.findRoomByUserId(player.userId);
+      if (room) {
+        room.addPlayer(socket, {
+          userId: player.userId,
+          username: player.username,
+          avatarUrl: player.avatarUrl,
+        });
+        const saveData = room.getSaveData();
+        console.log('✅ New socket connected:', socket.id);
+        socket.emit('reconnectSuccess', saveData);
+
+        // // 👥 Нөгөө тоглогчид: "playerReconnected"
+        // room.broadcastExcept(socket.id, 'playerReconnected', {
+        //   username: player.username,
+        // });
+
+        return;
+      }
     } catch (err) {
       console.error('Player connection error:', err);
       socket.emit('errorMessage', 'Player connection failed.');

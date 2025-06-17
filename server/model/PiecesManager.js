@@ -49,6 +49,25 @@ export class PiecesManager {
     return this.pieces.filter((p) => p.color === color);
   }
   getPieceById(id) {
-    return this.piecesfilter((p) => p.id === id);
+    return this.pieces.filter((p) => p.id === id);
+  }
+  serialize() {
+    return this.pieces.map((p) => ({
+      id: p.id,
+      row: p.row,
+      col: p.col,
+      color: p.color,
+      isKing: p.isKing,
+    }));
+  }
+
+  deserialize(data) {
+    this.pieces = data.map((p) => ({
+      id: p.id,
+      row: p.row,
+      col: p.col,
+      color: p.color,
+      isKing: p.isKing,
+    }));
   }
 }

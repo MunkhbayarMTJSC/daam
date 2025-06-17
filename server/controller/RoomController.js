@@ -15,31 +15,42 @@ export default function RoomController(socket, io, rooms) {
     }, 100);
   });
 
-  socket.on('joinRoom', ({ roomCode, userId, username, avatarUrl }) => {
-    const room = rooms.joinRoom(socket, roomCode, {
-      userId,
-      username,
-      avatarUrl,
-    });
-    if (!room) {
-      socket.emit('roomError', { message: 'Room full or not found' });
-      return;
-    }
-    const playerList = room.getPlayerList();
-    const color = room.getPlayerColor(socket);
-    room.broadcast('playerJoined', { username });
-    socket.emit('roomJoined', {
-      roomCode,
-      username,
-      color,
-      players: playerList,
-    });
-    setTimeout(() => {
-      io.to(roomCode).emit('updateReadyStatus', {
-        players: playerList,
+  socket.on(
+    'joinRoom',
+    ({ roomCode, userId, username, avatarUrl, reconnecting = false }) => {
+      const room = rooms.getRoom(roomCode);
+      if (!room) {
+        socket.emit('roomError', { message: 'Room not found' });
+        return;
+      }
+      const joinedRoom = rooms.joinRoom(socket, roomCode, {
+        userId,
+        username,
+        avatarUrl,
       });
-    }, 100);
-  });
+      if (!joinedRoom) {
+        socket.emit('roomError', { message: 'Room full or not found' });
+        return;
+      }
+      const playerList = joinedRoom.getPlayerList();
+      const color = joinedRoom.getPlayerColor(socket);
+
+      if (!reconnecting) {
+        joinedRoom.broadcast('playerJoined', { username });
+        socket.emit('roomJoined', {
+          roomCode,
+          username,
+          color,
+          players: playerList,
+        });
+        setTimeout(() => {
+          io.to(roomCode).emit('updateReadyStatus', {
+            players: playerList,
+          });
+        }, 100);
+      }
+    }
+  );
 
   socket.on('playerReady', ({ roomCode }) => {
     const room = rooms.getRoom(roomCode);
@@ -50,6 +61,44 @@ export default function RoomController(socket, io, rooms) {
     if (room.areBothReady()) {
       room.broadcast('bothReady');
       room.gameLogic.startGame();
+    }
+  });
+  socket.on('leaveRoom', (roomCode) => {
+    const room = rooms.getRoom(roomCode);
+    if (!room) return;
+
+    room.removePlayer(socket.id);
+    socket.leave(roomCode);
+
+    if (room.players.length === 0) {
+      rooms.deleteRoom(roomCode);
+      console.log(`❌ Room deleted: ${roomCode}`);
+    } else {
+      io.to(roomCode).emit('opponentLeft');
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Тоглогч холболтоос гарсан');
+    const roomCode = socket.roomCode;
+    const room = rooms.getRoom(roomCode);
+    if (!room) return;
+    const player = room.players.find((p) => p.socketId === socket.id);
+    if (!player) return;
+    player.disconnected = true;
+    player.disconnectedAt = Date.now();
+    for (const other of room.players) {
+      if (other.socketId !== socket.id && !other.disconnected) {
+        io.to(other.socketId).emit('playerDisconnected', {
+          userId: player.userId,
+          message: 'Тоглогч гарсан.',
+        });
+      }
+    }
+    const allLeft = room.players.every((p) => p.disconnected);
+    if (allLeft) {
+      rooms.deleteRoom(roomCode);
+      console.log(`🔥 Room ${roomCode} устгагдав.`);
     }
   });
 }

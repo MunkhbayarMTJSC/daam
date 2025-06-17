@@ -17,6 +17,27 @@ export default function GameController(socket, io, rooms) {
     socket.emit('updateBoard', data);
   });
   // Game Reset
+  socket.on('requestReplay', (roomCode) => {
+    const room = rooms.getRoom(roomCode);
+    if (!room) {
+      console.log('Error: Өрөө олдсонгүй!');
+      return;
+    }
+
+    room.resetGame(); // энэ функцийг GameRoom дотор заавал нэмээрэй
+
+    const data = {
+      pieces: room.gameLogic.pieceManager.pieces,
+      currentTurn: room.currentTurn,
+      movablePieces: room.gameLogic.currentMovablePieces,
+      pieceMoved: false,
+    };
+
+    io.to(roomCode).emit('gameRestarted', data);
+    const players = room.getPlayerList();
+    io.to(roomCode).emit('bothReadyImg', players);
+  });
+
   // Selection
   socket.on('selectedPiece', ({ roomCode, pieceId }) => {
     const room = rooms.getRoom(roomCode);

@@ -55,7 +55,7 @@ io.on('connection', (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
 
   // 🆕 Тоглогчийн соккит
-  PlayerController(socket, io);
+  PlayerController(socket, io, rooms);
   MissionController(socket, io);
   // 🆕 Өрөөний соккит
   GameController(socket, io, rooms);

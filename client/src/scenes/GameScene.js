@@ -17,6 +17,10 @@ export default class GameScene extends Phaser.Scene {
     this.playerColor = data.color;
     this.players = data.players;
     this.readyPlayers = {};
+    if (data.reconnectData) {
+      this.isReconnect = true;
+      this.reconnectData = data.reconnectData;
+    }
   }
   preload() {
     this.load.audio('moveSound', '/assets/audio/move.wav');
@@ -46,16 +50,36 @@ export default class GameScene extends Phaser.Scene {
       this.pieceManager,
       this.currentTurn
     );
+    console.log('socket', this.socket);
     this.gameController = new GameController(
       this,
       this.boardManager,
       this.pieceManager,
       this.playerColor,
-      this.showHighligher
+      this.showHighligher,
+      this.socket
     );
     this.boardManager.draw(width, height);
     this.boardManager.setPlayerColor(this.playerColor);
+    if (this.isReconnect) {
+      this.restoreGameState(this.reconnectData);
+    } else {
+      this.readyPopup = new ReadyPopup(
+        this,
+        width / 2,
+        height / 2,
+        this.socket,
+        this.roomCode,
+        this.players
+      );
+    }
+
     const homeBtn = this.add.image(width * 0.065, height * 0.03, 'homeBtn');
+    this.add.text(width * 0.4, height * 0.02, `Room Code: ${this.roomCode}`, {
+      fontSize: '20px',
+      color: '#ffffff',
+      fontFamily: 'MongolFont',
+    });
     homeBtn.setScale(0.35);
     homeBtn.setOrigin(0.5);
     homeBtn.setInteractive().on('pointerdown', () => {
@@ -66,14 +90,7 @@ export default class GameScene extends Phaser.Scene {
         console.warn('⚠ socket is undefined!');
       }
     });
-    this.readyPopup = new ReadyPopup(
-      this,
-      width / 2,
-      height / 2,
-      this.socket,
-      this.roomCode,
-      this.players
-    );
+
     this.socket.off('bothReadyImg');
     this.socket.on('bothReadyImg', (players) => {
       const mySocketId = this.socket.id;
@@ -117,5 +134,21 @@ export default class GameScene extends Phaser.Scene {
       this.gameController,
       this.playerColor
     );
+  }
+  restoreGameState(data) {
+    console.log('♻️ Reconnecting game state...', data);
+    this.currentTurn = data.currentTurn;
+    this.pieceManager.clear();
+    this.pieceManager.updatePieces(data.pieces);
+    this.gameController.setMoveHistory(data.moveHistory);
+    this.gameController.setCurrentTurn(data.currentTurn);
+
+    if (this.playerColor === data.currentTurn) {
+      this.gameController.showMovablePieces(
+        data.pieces,
+        data.currentTurn,
+        data.movablePieces
+      );
+    }
   }
 }

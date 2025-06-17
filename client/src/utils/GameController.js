@@ -1,19 +1,27 @@
 export default class GameController {
-  constructor(scene, board, pieceManager, playerColor, showHighlighter) {
+  constructor(
+    scene,
+    board,
+    pieceManager,
+    playerColor,
+    showHighlighter,
+    socket
+  ) {
     this.scene = scene;
     this.board = board;
     this.activeHighlights = [];
     this.pieceManager = pieceManager;
+    this.moveHistory = [];
     this.playerColor = playerColor;
     this.showHighlighter = showHighlighter;
-    this.scene.socket.off('highlightMoves');
-    this.scene.socket.on('highlightMoves', ({ piece, moves }) => {
+    socket.off('highlightMoves');
+    socket.on('highlightMoves', ({ piece, moves }) => {
       this.showHighlightMoves(piece, moves);
     });
-    this.scene.socket.on('clearHighlightMovePath', () => {
+    socket.on('clearHighlightMovePath', () => {
       this.showHighlighter.clearMovePathHighlight();
     });
-    this.scene.socket.on('highlightMovePath', (data) => {
+    socket.on('highlightMovePath', (data) => {
       this.showHighlighter.highlightMovePath(data.moveChain, data.piece);
       this.animateMove(data.piece, data.moveChain);
     });
@@ -61,6 +69,11 @@ export default class GameController {
         .on('pointerdown', () => this.sendMove(piece, chain));
     }
   }
+
+  setCurrentTurn(turn) {
+    this.currentTurn = turn;
+  }
+
   animateMove(piece, chain, onComplete) {
     const sprite = this.pieceManager.getPieceSpriteAt(piece.id);
     if (!sprite || chain.length === 0) {
@@ -109,6 +122,10 @@ export default class GameController {
     };
 
     moveStep(0);
+  }
+
+  setMoveHistory(moveHistory) {
+    this.moveHistory = moveHistory || [];
   }
 
   sendMove(piece, chain) {

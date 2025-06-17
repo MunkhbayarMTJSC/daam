@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { loadAndShowProfile } from '../ui/uiHelpers.js';
 import { getSocket, initSocket } from '../network/socketManager.js';
+import { showReconnectPopup } from '../ui/uiHelpers.js';
 
 export default class MainLobby extends Phaser.Scene {
   constructor() {
@@ -8,7 +9,7 @@ export default class MainLobby extends Phaser.Scene {
   }
 
   init() {
-    this.socket = getSocket() || initSocket();
+    this.socket = getSocket() || initSocket(this);
 
     let storedUser = localStorage.getItem('playerData');
 
@@ -25,9 +26,8 @@ export default class MainLobby extends Phaser.Scene {
     } else {
       this.socket.emit('playerConnected', JSON.parse(storedUser));
     }
-
-    // 🔹 Серверээс тоглогчийн мэдээлэл ирсний дараа avatar-г ачаална
     this.socket.on('playerDataLoaded', (data) => {
+      this.userId = data.userId;
       this.username = data.username;
       this.avatarUrl = data.avatarUrl;
       this.coins = data.coins;
@@ -37,14 +37,9 @@ export default class MainLobby extends Phaser.Scene {
       this.gamesPlayed = data.gamesPlayed;
       this.gamesWon = data.gamesWon;
       this.createdAt = data.createdAt;
+      this.reconnectRoomCode = data.reconnectRoomCode;
       localStorage.setItem('playerData', JSON.stringify(data));
       this.headInfo();
-      const position = {
-        x: 43,
-        y: 60,
-      };
-
-      loadAndShowProfile(this, this.avatarUrl, this.level, position);
     });
   }
 
@@ -62,6 +57,11 @@ export default class MainLobby extends Phaser.Scene {
       playerObj: JSON.parse(localStorage.getItem('playerData') || '{}'),
       socket: this.socket,
     };
+    console.log(this.reconnectRoomCode);
+    if (this.reconnectRoomCode) {
+      //Recconect popup
+      showReconnectPopup(this, this.socket, this.reconnectRoomCode, data);
+    }
     this.headInfo(data, width, height);
     this.midInfo(data, width, height);
     this.bottomInfo(data, width, height);
@@ -78,7 +78,6 @@ export default class MainLobby extends Phaser.Scene {
       if (this.textures.exists('profileImage')) {
         this.textures.remove('profileImage');
       }
-
       // Socket listener-уудыг салгах
       if (this.socket) {
         this.socket.removeAllListeners('updateBoard');
@@ -89,6 +88,12 @@ export default class MainLobby extends Phaser.Scene {
 
   update() {}
   headInfo(data, width, height) {
+    const position = {
+      x: 43,
+      y: 60,
+    };
+
+    loadAndShowProfile(this, this.avatarUrl, this.level, position);
     const coins = this.add
       .image(width * 0.33, height * 0.058, 'coins')
       .setScale(0.55)
@@ -153,11 +158,6 @@ export default class MainLobby extends Phaser.Scene {
       this.time.delayedCall(600, () => {
         this.scene.start('FriendLobby', data);
       });
-
-      // this.cameras.main.zoomTo(2, 500);
-      // this.time.delayedCall(500, () => {
-      //   this.scene.start('FriendLobby', data);
-      // });
     });
 
     this.tweens.add({
