@@ -1,19 +1,23 @@
 export default class PieceManager {
+  #scene;
+  #board;
+  #playerColor;
+  #pieces;
   constructor(scene, board, playerColor) {
-    this.scene = scene;
-    this.board = board;
-    this.playerColor = playerColor;
-    this.pieces = new Map();
+    this.#scene = scene;
+    this.#board = board;
+    this.#playerColor = playerColor;
+    this.#pieces = new Map();
   }
   updatePieces(piecesArray) {
     const updatedIds = new Set();
 
     for (const piece of piecesArray) {
-      let sprite = this.pieces.get(piece.id);
+      let sprite = this.#pieces.get(piece.id);
 
       if (!sprite) {
         sprite = this.createPieceSprite(piece);
-        this.pieces.set(piece.id, sprite);
+        this.#pieces.set(piece.id, sprite);
       } else {
         // 🟡 Зөвхөн row, col-г update хийнэ, sprite.setPosition() хийхгүй
         sprite.row = piece.row;

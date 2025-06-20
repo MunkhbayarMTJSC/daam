@@ -166,7 +166,7 @@ export default class GameRoom {
     return {
       roomCode: this.roomCode,
       players: this.players.map(({ socketId, ...rest }) => rest),
-      playerColors: this.playerColors,
+      playerColors: this.playerColors, // ✅ бүгдийг client-д өгөх
       currentTurn: this.currentTurn,
       pieces: this.gameLogic.pieceManager.serialize(),
       movablePieces: this.gameLogic.currentMovablePieces,
@@ -176,6 +176,7 @@ export default class GameRoom {
       board: this.board.serialize(),
     };
   }
+
   loadFromData(data) {
     this.roomCode = data.roomCode;
     this.players = data.players.map((p) => ({

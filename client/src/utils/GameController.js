@@ -30,7 +30,7 @@ export default class GameController {
     // 🧹 Эхлээд бүх sprite-үүдийн interactive-г устгах
     for (const sprite of this.pieceManager.pieces.values()) {
       sprite.disableInteractive();
-      sprite.removeAllListeners(); // 🎯 pointerdown-ууд давхардахаас сэргийлнэ
+      sprite.removeAllListeners(); // pointerdown-ууд давхардахаас сэргийлнэ
     }
 
     this.pieceManager.updatePieces(piecesArray);
@@ -39,26 +39,30 @@ export default class GameController {
       Array.isArray(movablePieces) ? movablePieces.map((p) => p.id) : []
     );
 
+    const isMyTurn = currentTurn === this.playerColor;
+
     for (const piece of movablePieces) {
       const sprite = this.pieceManager.getPieceSpriteAt(piece.id);
       if (!sprite) continue;
 
-      const isMyTurn = currentTurn === this.playerColor;
       const isMyPiece = piece.color === this.playerColor;
       const isMovable = movablePieceIds.has(piece.id);
 
+      // Зөвхөн өөрийн ээлж, өөрийн хүү дээр интерактив идэвхжүүлнэ
       if (isMyTurn && isMyPiece && isMovable) {
         sprite.setInteractive();
-        sprite.on('pointerdown', () => {
+        sprite.once('pointerdown', () => {
           this.scene.socket.emit('selectedPiece', {
             roomCode: this.scene.roomCode,
             pieceId: piece.id,
           });
           this.showHighlighter.highlightSelectedPiece(sprite);
         });
-        this.showHighlighter.highlightMovablePieces(movablePieces || []);
       }
     }
+
+    // Энд бүх нүүдэл хийх боломжтой хүүд зориулан нэг удаа харуулах
+    this.showHighlighter.highlightMovablePieces(movablePieces || []);
   }
 
   showHighlightMoves(piece, moves) {

@@ -6,6 +6,7 @@ export default function RoomController(socket, io, rooms) {
     const playerList = room.getPlayerList();
     socket.emit('roomJoined', {
       roomCode: room.roomCode,
+      socketId: socket.id,
       username,
       color,
       players: playerList,
@@ -39,6 +40,7 @@ export default function RoomController(socket, io, rooms) {
         joinedRoom.broadcast('playerJoined', { username });
         socket.emit('roomJoined', {
           roomCode,
+          socketId: socket.id,
           username,
           color,
           players: playerList,

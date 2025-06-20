@@ -4,6 +4,7 @@ import PieceManager from '../classes/PieceManager.js';
 import GameController from '../utils/GameController.js';
 import ShowHighlighter from '../classes/ShowHighlighter.js';
 import GameSocketHandlers from '../network/GameSocketHandlers';
+import RoomSocketHandlers from '../network/RoomSocketHandlers';
 import { circleProfileImg } from '../ui/uiHelpers';
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -13,11 +14,13 @@ export default class GameScene extends Phaser.Scene {
   init(data) {
     this.socket = data.socket;
     this.roomCode = data.roomCode;
+    this.socketId = data.socketId;
     this.username = data.username;
     this.playerColor = data.color;
     this.players = data.players;
     this.readyPlayers = {};
     if (data.reconnectData) {
+      this.playerColor = data.reconnectData.playerColor;
       this.isReconnect = true;
       this.reconnectData = data.reconnectData;
     }
@@ -127,6 +130,7 @@ export default class GameScene extends Phaser.Scene {
           .setOrigin(0.5);
       }
     });
+    RoomSocketHandlers(this);
 
     GameSocketHandlers(
       this,
@@ -137,18 +141,21 @@ export default class GameScene extends Phaser.Scene {
   }
   restoreGameState(data) {
     console.log('♻️ Reconnecting game state...', data);
+
     this.currentTurn = data.currentTurn;
+
     this.pieceManager.clear();
     this.pieceManager.updatePieces(data.pieces);
+
     this.gameController.setMoveHistory(data.moveHistory);
     this.gameController.setCurrentTurn(data.currentTurn);
 
-    if (this.playerColor === data.currentTurn) {
-      this.gameController.showMovablePieces(
-        data.pieces,
-        data.currentTurn,
-        data.movablePieces
-      );
-    }
+    // Үүний оронд: ээлж ямар ч байсан movable pieces-ийг харуулна,
+    // харин дотор нь interactive-г зөвхөн өөрийн ээлж дээр идэвхжүүлнэ.
+    this.gameController.showMovablePieces(
+      data.pieces,
+      data.currentTurn,
+      data.movablePieces
+    );
   }
 }

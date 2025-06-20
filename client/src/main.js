@@ -3,13 +3,14 @@ import MainLobby from './scenes/MainLobby';
 import PreloadScene from './scenes/PreloadScene';
 import FriendLobby from './scenes/FriendLobby';
 import GameScene from './scenes/GameScene';
+import * as CONFIG from './Config';
 
 const gameCanvas = document.getElementById('gameCanvas');
 
 const config = {
   type: Phaser.WEBGL,
-  width: 416,
-  height: 740,
+  width: CONFIG.SCREEN_WIDTH,
+  height: CONFIG.SCREEN_HEIGHT,
   canvas: gameCanvas,
   scale: {
     mode: Phaser.Scale.FIT,
