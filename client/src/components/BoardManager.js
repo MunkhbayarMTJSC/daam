@@ -1,4 +1,3 @@
-import GameConfig from '../utils/GameConfig.js';
 import * as CONFIG from '../Config.js';
 export default class BoardView {
   #scene;

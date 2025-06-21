@@ -16,7 +16,6 @@ export default class GameController {
     this.showHighlighter = showHighlighter;
     socket.off('highlightMoves');
     socket.on('highlightMoves', ({ piece, moves }) => {
-      console.log('object :>> ', piece);
       this.showHighlightMoves(piece, moves);
     });
     socket.on('clearHighlightMovePath', () => {
@@ -41,8 +40,12 @@ export default class GameController {
     );
 
     const isMyTurn = currentTurn === this.playerColor;
+    const filteredMovablePieces = movablePieces.filter(
+      (p) =>
+        p.color === this.playerColor && isMyTurn && movablePieceIds.has(p.id)
+    );
 
-    for (const piece of movablePieces) {
+    for (const piece of filteredMovablePieces) {
       const sprite = this.pieceManager.getPieceSpriteAt(piece.id);
       if (!sprite) continue;
 
@@ -63,7 +66,7 @@ export default class GameController {
     }
 
     // Энд бүх нүүдэл хийх боломжтой хүүд зориулан нэг удаа харуулах
-    this.showHighlighter.highlightMovablePieces(movablePieces || []);
+    this.showHighlighter.highlightMovablePieces(filteredMovablePieces || []);
   }
 
   showHighlightMoves(piece, moves) {

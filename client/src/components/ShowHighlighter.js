@@ -91,11 +91,10 @@ export default class ShowHighlighter {
     if (!Array.isArray(moveChain) || moveChain.length === 0) return;
     const graphics = this.scene.add.graphics();
     this._movePathGraphics = graphics;
-    graphics.lineStyle(3, 0xffd700, 1); // Алтан хүрээ
+    graphics.lineStyle(1, 0xffd700, 1); // Алтан хүрээ
     graphics.setDepth(7);
 
     const boxSize = this.board.tileSize * 0.8;
-    console.log('object :>> ', boxSize);
     const halfBox = boxSize / 2;
 
     // 1. Эхлэл цэг

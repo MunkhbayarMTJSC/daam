@@ -18,9 +18,9 @@ export default class Piece extends Phaser.GameObjects.Container {
     this.#color = data.color;
     this.#isKing = data.isKing;
     const frame = this.getFrame();
-    this.#sprite = scene.add.sprite(0, 0, 'pieces', frame).setScale(0.45);
+    this.#sprite = scene.add.sprite(0, 0, 'pieces', frame).setScale(0.42);
     this.add(this.#sprite);
-    this.setSize(this.#sprite.width, this.#sprite.height);
+    this.setSize(this.#sprite.displayWidth, this.#sprite.displayHeight);
     this.setInteractive();
     scene.add.existing(this);
   }
@@ -31,17 +31,17 @@ export default class Piece extends Phaser.GameObjects.Container {
     return this.#col;
   }
 
-  getFrame() {
-    return this.#color === 0 ? (this.isKing ? 2 : 3) : this.isKing ? 0 : 1;
-  }
   updatePieceState({ row, col, isKing }) {
     this.#isKing = isKing;
 
-    // ❌ Тухайн үед tween хийгдэж байгаа байж магадгүй тул setPosition хийж болохгүй
     this.#row = row;
     this.#col = col;
 
-    this.#sprite.setFrame(this.getFrame());
+    const frame = this.getFrame();
+    this.#sprite.setFrame(frame);
+  }
+  getFrame() {
+    return this.#color === 0 ? (this.#isKing ? 2 : 3) : this.#isKing ? 0 : 1;
   }
 
   destroyPiece() {
