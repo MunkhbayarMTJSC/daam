@@ -5,7 +5,10 @@ import GameController from '../utils/GameController.js';
 import ShowHighlighter from '../components/ShowHighlighter.js';
 import GameSocketHandlers from '../network/GameSocketHandlers';
 import RoomSocketHandlers from '../network/RoomSocketHandlers';
-import { circleProfileImg } from '../ui/uiHelpers';
+import {
+  loadAndShowProfile,
+  circleProfileImg,
+} from '../components/ui/ShowProfile.js';
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
@@ -53,7 +56,6 @@ export default class GameScene extends Phaser.Scene {
       this.pieceManager,
       this.currentTurn
     );
-    console.log('socket', this.socket);
     this.gameController = new GameController(
       this,
       this.boardManager,
@@ -104,11 +106,11 @@ export default class GameScene extends Phaser.Scene {
           x: width * 0.09,
           y: height * 0.86,
         };
-        circleProfileImg(this, selfPlayer.avatarUrl, 32, pos);
+        circleProfileImg(this, selfPlayer.avatarUrl, pos);
 
         this.add
-          .text(width * 0.29, height * 0.86, selfPlayer.username, {
-            fontSize: '14px',
+          .text(width * 0.24, height * 0.86, selfPlayer.username, {
+            fontSize: '10px',
             color: '#ffffff',
             fontFamily: 'MongolFont',
           })
@@ -119,11 +121,11 @@ export default class GameScene extends Phaser.Scene {
           x: width * 0.9,
           y: height * 0.2,
         };
-        circleProfileImg(this, opponentPlayer.avatarUrl, 32, pos);
+        circleProfileImg(this, opponentPlayer.avatarUrl, pos);
 
         this.add
-          .text(width * 0.7, height * 0.2, opponentPlayer.username, {
-            fontSize: '14px',
+          .text(width * 0.75, height * 0.2, opponentPlayer.username, {
+            fontSize: '10px',
             color: '#ffffff',
             fontFamily: 'MongolFont',
           })
