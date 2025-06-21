@@ -16,13 +16,14 @@ export default class GameController {
     this.showHighlighter = showHighlighter;
     socket.off('highlightMoves');
     socket.on('highlightMoves', ({ piece, moves }) => {
+      console.log('object :>> ', piece);
       this.showHighlightMoves(piece, moves);
     });
     socket.on('clearHighlightMovePath', () => {
       this.showHighlighter.clearMovePathHighlight();
     });
     socket.on('highlightMovePath', (data) => {
-      this.showHighlighter.highlightMovePath(data.moveChain, data.piece);
+      this.showHighlighter.highlightMovePath(data.piece, data.moveChain);
       this.animateMove(data.piece, data.moveChain);
     });
   }
@@ -51,7 +52,7 @@ export default class GameController {
       // Зөвхөн өөрийн ээлж, өөрийн хүү дээр интерактив идэвхжүүлнэ
       if (isMyTurn && isMyPiece && isMovable) {
         sprite.setInteractive();
-        sprite.once('pointerdown', () => {
+        sprite.on('pointerdown', () => {
           this.scene.socket.emit('selectedPiece', {
             roomCode: this.scene.roomCode,
             pieceId: piece.id,
@@ -78,9 +79,10 @@ export default class GameController {
     this.currentTurn = turn;
   }
 
-  animateMove(piece, chain, onComplete) {
-    const sprite = this.pieceManager.getPieceSpriteAt(piece.id);
-    if (!sprite || chain.length === 0) {
+  animateMove(pieceData, chain, onComplete) {
+    const pieceObject = this.pieceManager.getPieceById(pieceData.id);
+
+    if (!pieceObject || chain.length === 0) {
       if (onComplete) onComplete();
       return;
     }
@@ -93,20 +95,19 @@ export default class GameController {
 
       const step = chain[index];
       const { row, col, captured } = step;
-
       const { x, y } = this.board.getTilePosition(row, col);
 
       // 🔫 Fade out captured pieces
       if (captured) {
         const capturedArray = Array.isArray(captured) ? captured : [captured];
         for (const cap of capturedArray) {
-          const capturedSprite = this.pieceManager.getPieceSpriteAt(cap.id);
-          if (capturedSprite) {
+          const capSprite = this.pieceManager.getPieceById(cap.id);
+          if (capSprite) {
             this.scene.tweens.add({
-              targets: capturedSprite,
+              targets: capSprite,
               alpha: 0,
               duration: 200,
-              onComplete: () => capturedSprite.destroy(),
+              onComplete: () => capSprite.destroyPiece(),
             });
           }
         }
@@ -114,12 +115,13 @@ export default class GameController {
 
       // 🎬 Animate this step
       this.scene.tweens.add({
-        targets: sprite,
+        targets: pieceObject,
         x,
         y,
         duration: 300,
         ease: 'Power2',
         onComplete: () => {
+          pieceObject.moveTo(row, col);
           moveStep(index + 1);
         },
       });

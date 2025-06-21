@@ -14,22 +14,23 @@ export default class ShowHighlighter {
     this._movePathGraphics = null;
   }
   highlightMovablePieces(movablePieces) {
-    this.clearHighlights({ keepSelected: true });
+    this.clearHighlights({ keepSelected: false });
     for (const piece of movablePieces) {
-      const sprite = this.pieceManager.getPieceSpriteAt(piece.id);
+      const pieceObj = this.pieceManager.getPieceById(piece.id);
 
-      if (sprite) {
-        sprite.setDepth(10);
+      if (pieceObj) {
+        pieceObj.setDepth(10);
 
         const glow = this.scene.add.graphics();
         glow.fillStyle(0x197745, 1);
-        glow.fillRect(sprite.x - 20, sprite.y - 20, 40, 40);
+        glow.fillRect(pieceObj.x - 20, pieceObj.y - 20, 40, 40);
         glow.setDepth(9);
         this.glowHighlights.push(glow);
       }
     }
   }
-  highlightSelectedPiece(sprite) {
+
+  highlightSelectedPiece(piece) {
     // 🧼 Хуучны glow болон tween-г устгах
     if (this.selectedGlow) {
       this.selectedGlow.destroy();
@@ -42,7 +43,7 @@ export default class ShowHighlighter {
 
     const glow = this.scene.add.graphics();
     glow.fillStyle(0x197745, 1);
-    glow.fillRect(sprite.x - 20, sprite.y - 20, 40, 40);
+    glow.fillRect(piece.x - 20, piece.y - 20, 40, 40);
     glow.setDepth(8);
 
     this.selectedGlow = glow;
@@ -67,14 +68,34 @@ export default class ShowHighlighter {
     return this.validMoveCircles;
   }
 
-  highlightMovePath(moveChain, piece) {
+  // 0: captured:
+  //   Array(1)
+  //   0: {id: '1-5-6-1750488842904-0.6643049859071635', row: 5, col: 4}
+  //   length: 1
+  // [[Prototype]]:
+  // Array(0)
+  // col: 3
+  // row: 6
+  // [[Prototype]]: Object
+  // 1: captured:
+  //   Array(1)
+  //   0: {id: '1-3-6-1750488842904-0.732874931008646', row: 5, col: 2}
+  //   length: 1
+  // [[Prototype]]:
+  // Array(0)
+  // col: 1 Идээд буусан
+  // row: 4 Идээд буусан
+  // [[Prototype]]: Object
+  // length: 2
+  highlightMovePath(piece, moveChain) {
     if (!Array.isArray(moveChain) || moveChain.length === 0) return;
     const graphics = this.scene.add.graphics();
     this._movePathGraphics = graphics;
     graphics.lineStyle(3, 0xffd700, 1); // Алтан хүрээ
     graphics.setDepth(7);
 
-    const boxSize = this.board.tileSize * 0.6;
+    const boxSize = this.board.tileSize * 0.8;
+    console.log('object :>> ', boxSize);
     const halfBox = boxSize / 2;
 
     // 1. Эхлэл цэг
@@ -129,10 +150,6 @@ export default class ShowHighlighter {
 
     this.glowHighlights.forEach((g) => g.destroy());
     this.glowHighlights = [];
-
-    for (const sprite of this.pieceManager.pieces.values()) {
-      sprite.clearTint();
-    }
 
     // 🔥 Сонгосон хүүг арилгах эсэхийг сонгож болно
     if (!keepSelected) {

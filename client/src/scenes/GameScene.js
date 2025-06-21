@@ -1,8 +1,8 @@
 import ReadyPopup from '../ui/ReadyPopup';
-import BoardManager from '../classes/BoardManager.js';
-import PieceManager from '../classes/PieceManager.js';
+import BoardManager from '../components/BoardManager.js';
+import PieceManager from '../components/PieceManager.js';
 import GameController from '../utils/GameController.js';
-import ShowHighlighter from '../classes/ShowHighlighter.js';
+import ShowHighlighter from '../components/ShowHighlighter.js';
 import GameSocketHandlers from '../network/GameSocketHandlers';
 import RoomSocketHandlers from '../network/RoomSocketHandlers';
 import { circleProfileImg } from '../ui/uiHelpers';

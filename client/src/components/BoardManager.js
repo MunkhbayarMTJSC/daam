@@ -21,6 +21,9 @@ export default class BoardView {
     this.#playerColor = playerColor; // 0 = хар, 1 = улаан
   }
 
+  get tileSize() {
+    return this.#tileSize;
+  }
   draw(width, height) {
     this.#offSetX = CONFIG.BOARD_OFFSET_X;
     this.#offSetY = CONFIG.BOARD_OFFSET_Y;
