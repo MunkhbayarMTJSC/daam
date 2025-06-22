@@ -22,8 +22,8 @@ export default function createJoinRoomUI(scene, container, data) {
   container.add(placeholder);
 
   scene.codeText = scene.add
-    .text(width / 2, height * 0.45, '', {
-      fontSize: '36px',
+    .text(width / 2, height * 0.45, 'Room code here', {
+      fontSize: '32px',
       color: '#000',
     })
     .setOrigin(0.5);

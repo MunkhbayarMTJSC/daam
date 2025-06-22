@@ -2,13 +2,11 @@ export default function createRoomTabs(scene) {
   const { width, height } = scene.scale;
 
   const createTab = scene.add
-    .sprite(width * 0.25, height * 0.238, 'tabButtons', 1)
-    .setScale(0.5)
+    .sprite(width * 0.273, height * 0.288, 'tabButtons', 1)
     .setInteractive();
 
   const joinTab = scene.add
-    .sprite(width * 0.75, height * 0.238, 'tabButtons', 2)
-    .setScale(0.5)
+    .sprite(width * 0.727, height * 0.288, 'tabButtons', 2)
     .setInteractive();
 
   let currentTab = 'create';

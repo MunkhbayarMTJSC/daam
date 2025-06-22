@@ -51,25 +51,6 @@ export default class MainLobby extends Phaser.Scene {
     headInfo(this, data, width, height);
     midInfo(this, data, width, height);
     bottomInfo(this, data, width, height);
-    this.events.once('shutdown', () => {
-      // Бүх profile элементүүдийг устгах
-      if (this.profileElements) {
-        this.profileElements.forEach((el) => {
-          if (el && el.destroy) el.destroy();
-        });
-        this.profileElements = null;
-      }
-
-      // Texture-г устгах (WebGL дотор устгах шаардлагатай)
-      if (this.textures.exists('profileImage')) {
-        this.textures.remove('profileImage');
-      }
-      // Socket listener-уудыг салгах
-      if (this.socket) {
-        this.socket.removeAllListeners('updateBoard');
-        this.socket.removeAllListeners('gameEnded');
-      }
-    });
   }
 
   update() {}

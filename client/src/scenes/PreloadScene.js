@@ -11,8 +11,8 @@ export default class PreloadScene extends Phaser.Scene {
     });
     this.load.image('bgFriend', '/assets/friends.png');
     this.load.spritesheet('tabButtons', 'assets/tab_buttons.png', {
-      frameWidth: 300,
-      frameHeight: 98,
+      frameWidth: 150,
+      frameHeight: 79,
     });
     this.load.spritesheet('numpad', 'assets/keyboard.png', {
       frameWidth: 133,
@@ -22,6 +22,7 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('createBtn', '/assets/create_btn.png');
     this.load.image('joinBtn', '/assets/join_btn.png');
     this.load.image('tabBg', '/assets/bgTab.png');
+    this.load.image('tabBg1', '/assets/bgTab1.png');
     this.load.image('homeBtn', '/assets/home_btn.png');
     this.load.image('bg', '/assets/bg.png');
     this.load.image('missionBg', '/assets/mission_bg.png');
@@ -47,8 +48,8 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('list_shop', '/assets/list_shop.png');
 
     this.load.spritesheet('profileFrames', 'assets/profile_frames.png', {
-      frameWidth: 200,
-      frameHeight: 283,
+      frameWidth: 80,
+      frameHeight: 65,
     });
     this.load.image('defaultAvatar', '/assets/avatar1.png');
   }

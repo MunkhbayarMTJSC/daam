@@ -24,37 +24,28 @@ function showProfileImage(scene, level, position, profileKey) {
     console.error("❌ 'position' is undefined in showProfileImage");
     return;
   }
-
-  // 1. Profile зураг
+  const container = scene.add.container(position.x, position.y);
   const profileImage = scene.add
-    .image(position.x, position.y, profileKey)
+    .image(0, -5, profileKey)
     .setDisplaySize(40, 40);
-  scene.profileElements.push(profileImage);
 
   const maskShape = scene.add.graphics();
   maskShape.fillStyle(0xffffff);
-  maskShape.fillCircle(position.x, position.y, 20);
+  maskShape.setPosition(position.x, position.y - 5);
+  maskShape.fillCircle(0, 0, 17);
   const mask = maskShape.createGeometryMask();
   profileImage.setMask(mask);
-
   maskShape.visible = false;
 
-  const border = scene.add.graphics();
-  border.lineStyle(3, 0x861d8f);
-  border.strokeCircle(position.x, position.y, 20); // 30 = радиус
-  scene.profileElements.push(border);
+  const frame = scene.add.sprite(0, 0, 'profileFrames', 0);
 
   // 4. ✨ Level text
-  const levelText = scene.add.text(
-    position.x - 15,
-    position.y - 31,
-    `LvL ${level}`,
-    {
-      fontSize: '8px',
-      color: '#fff',
-    }
-  );
-  scene.profileElements.push(levelText);
+  const levelText = scene.add.text(-11, 21, `LvL ${level}`, {
+    fontSize: '8px',
+    color: '#fff',
+  });
+  container.add([profileImage, frame, levelText]);
+  scene.profileElements.push(container);
 }
 export function circleProfileImg(scene, avatarUrl, position) {
   if (!scene.profileElements) scene.profileElements = [];
@@ -81,25 +72,22 @@ function showCircleProfileImg(scene, position, profileKey) {
     console.error("❌ 'position' is undefined in showProfileImage");
     return;
   }
-
-  // 1. Profile зураг
-  const profileImage = scene.add
-    .image(position.x, position.y, profileKey)
-    .setDisplaySize(40, 40);
-  scene.profileElements.push(profileImage);
+  const container = scene.add.container(position.x, position.y);
+  const profileImage = scene.add.image(0, 0, profileKey).setDisplaySize(40, 40);
 
   const maskShape = scene.add.graphics();
   maskShape.fillStyle(0xffffff);
-  maskShape.fillCircle(position.x, position.y, 20);
+  maskShape.setPosition(position.x, position.y);
+  maskShape.fillCircle(0, 0, 20);
   const mask = maskShape.createGeometryMask();
   profileImage.setMask(mask);
-
   maskShape.visible = false;
 
   const border = scene.add.graphics();
   border.lineStyle(3, 0x861d8f);
-  border.strokeCircle(position.x, position.y, 20); // 30 = радиус
-  scene.profileElements.push(border);
+  border.strokeCircle(0, 0, 20);
+  container.add([profileImage, border]);
+  scene.profileElements.push(container);
 }
 
 function generateProfileKey(url) {

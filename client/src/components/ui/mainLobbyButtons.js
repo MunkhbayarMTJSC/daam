@@ -2,10 +2,9 @@ import { loadAndShowProfile } from './ShowProfile.js';
 import { Coins, Gems } from './CoinsAndGems.js';
 export function headInfo(scene, data, width, height) {
   const position = {
-    x: 25,
-    y: 25,
+    x: 44,
+    y: 41,
   };
-  console.log('Data from scene', data);
   loadAndShowProfile(
     scene,
     data.playerObj.avatarUrl,
@@ -13,29 +12,29 @@ export function headInfo(scene, data, width, height) {
     position
   );
   const coins = new Coins(scene, data.playerObj.coins, {
-    x: width * 0.25,
-    y: height * 0.04,
+    x: width * 0.32,
+    y: height * 0.035,
   });
   const gems = new Gems(scene, data.playerObj.coins, {
-    x: width * 0.5,
-    y: height * 0.04,
+    x: width * 0.32,
+    y: height * 0.08,
   });
-  // const vip = scene.add
-  //   .image(width * 0.76, height * 0.083, 'vip')
-  //   .setScale(0.68)
-  //   .setOrigin(0.5);
+  const vip = scene.add
+    .image(width * 0.76, height * 0.059, 'vip')
+    .setScale(0.68)
+    .setOrigin(0.5);
   const msg = scene.add
-    .image(width * 0.8, height * 0.04, 'msg')
+    .image(width * 0.9, height * 0.037, 'msg')
     .setScale(0.31)
     .setOrigin(0.5);
   const setting = scene.add
-    .image(width * 0.9, height * 0.04, 'setting')
+    .image(width * 0.9, height * 0.084, 'setting')
     .setScale(0.31)
     .setOrigin(0.5);
 }
 export function midInfo(scene, data, width, height) {
   const missions = scene.add
-    .image(width * 0.2, height * 0.15, 'missions')
+    .image(width * 0.2, height * 0.2, 'missions')
     .setScale(0.4)
     .setOrigin(0.5)
     .setInteractive({ useHandCursor: true });
@@ -44,11 +43,11 @@ export function midInfo(scene, data, width, height) {
   });
 
   const reward = scene.add
-    .image(width * 0.5, height * 0.15, 'reward')
+    .image(width * 0.5, height * 0.2, 'reward')
     .setScale(0.4)
     .setOrigin(0.5);
   const tournament = scene.add
-    .image(width * 0.8, height * 0.15, 'tournament')
+    .image(width * 0.8, height * 0.2, 'tournament')
     .setScale(0.4)
     .setOrigin(0.5);
   const logo = scene.add

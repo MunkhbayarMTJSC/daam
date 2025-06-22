@@ -22,10 +22,17 @@ export default class FriendLobby extends Phaser.Scene {
     this.add
       .image(width / 2, height / 2, 'bgFriend')
       .setDisplaySize(width, height);
-    this.add
+    const button = this.add
       .image(width * 0.08, height * 0.04, 'homeBtn')
       .setScale(0.4)
       .setOrigin(0.5);
+    button.setInteractive().on('pointerdown', () => {
+      if (this.socket) {
+        this.scene.start('MainLobby', this.socket);
+      } else {
+        console.warn('⚠ socket is undefined!');
+      }
+    });
 
     // Табыг үүсгэх
     const { createTab, joinTab, setTab } = createRoomTabs(this);

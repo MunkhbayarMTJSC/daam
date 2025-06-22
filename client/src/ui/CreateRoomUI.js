@@ -2,26 +2,12 @@ export default function createCreateRoomUI(scene, container, data) {
   const { width, height } = scene.scale;
 
   const tabBg = scene.add
-    .image(width / 2, height / 2, 'tabBg')
+    .image(width / 2, height / 2, 'tabBg1')
     .setDisplaySize(width, height);
   container.add(tabBg);
 
-  const infoText = scene.add
-    .text(
-      width / 2,
-      height * 0.4,
-      `1. Create товч дээр дар\n2. Найздаа кодоо явуул`,
-      {
-        fontSize: '18px',
-        fill: '#fff',
-        fontFamily: 'MongolFont',
-      }
-    )
-    .setOrigin(0.5);
-  container.add(infoText);
-
   const codeLabel = scene.add
-    .text(width / 2, height * 0.5, `Таны өрөөний код:`, {
+    .text(width / 2, height * 0.5, `Coming...`, {
       fontSize: '24px',
       fill: '#fff',
       fontFamily: 'MongolFont',
