@@ -1,5 +1,6 @@
-import { loadAndShowProfile } from './ShowProfile.js';
-import { Coins, Gems } from './CoinsAndGems.js';
+import { loadAndShowProfile } from './load-and-show-profile.js';
+import { Coins, Gems } from './coins-gems.js';
+import { showMission } from '../popups/show-mission.js';
 export function headInfo(scene, data, width, height) {
   const position = {
     x: 44,
@@ -39,7 +40,7 @@ export function midInfo(scene, data, width, height) {
     .setOrigin(0.5)
     .setInteractive({ useHandCursor: true });
   missions.on('pointerdown', () => {
-    this.showMissionPopup();
+    showMission(scene);
   });
 
   const reward = scene.add

@@ -15,6 +15,7 @@ export default function GameSocketHandlers(
   // ✅ Шинэ listener-үүдийг нэм
   scene.socket.on('updateBoard', (data) => {
     currentTurn = data.currentTurn;
+    scene.setTurn(currentTurn);
     gameController.showMovablePieces(
       data.pieces,
       data.currentTurn,

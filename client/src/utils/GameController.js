@@ -13,6 +13,7 @@ export default class GameController {
     this.pieceManager = pieceManager;
     this.moveHistory = [];
     this.playerColor = playerColor;
+    this.currentTurn = playerColor === 1 ? 1 : 0;
     this.showHighlighter = showHighlighter;
     socket.off('highlightMoves');
     socket.on('highlightMoves', ({ piece, moves }) => {
@@ -27,6 +28,7 @@ export default class GameController {
     });
   }
   showMovablePieces(piecesArray, currentTurn, movablePieces) {
+    this.setCurrentTurn(currentTurn);
     // 🧹 Эхлээд бүх sprite-үүдийн interactive-г устгах
     for (const sprite of this.pieceManager.pieces.values()) {
       sprite.disableInteractive();
@@ -80,6 +82,10 @@ export default class GameController {
 
   setCurrentTurn(turn) {
     this.currentTurn = turn;
+  }
+
+  getCurrentTurn() {
+    return this.currentTurn;
   }
 
   animateMove(pieceData, chain, onComplete) {

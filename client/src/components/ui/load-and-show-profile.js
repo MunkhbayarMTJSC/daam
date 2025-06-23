@@ -47,7 +47,7 @@ function showProfileImage(scene, level, position, profileKey) {
   container.add([profileImage, frame, levelText]);
   scene.profileElements.push(container);
 }
-export function circleProfileImg(scene, avatarUrl, position) {
+export function circleProfileImg(scene, avatarUrl, position, size) {
   if (!scene.profileElements) scene.profileElements = [];
 
   const savedPosition = { ...position };
@@ -63,29 +63,31 @@ export function circleProfileImg(scene, avatarUrl, position) {
 
     scene.load.start();
   } else {
-    showCircleProfileImg(scene, savedPosition, profileKey);
+    showCircleProfileImg(scene, savedPosition, size, profileKey);
   }
 }
 
-function showCircleProfileImg(scene, position, profileKey) {
+function showCircleProfileImg(scene, position, size, profileKey) {
   if (!position) {
     console.error("❌ 'position' is undefined in showProfileImage");
     return;
   }
   const container = scene.add.container(position.x, position.y);
-  const profileImage = scene.add.image(0, 0, profileKey).setDisplaySize(40, 40);
+  const profileImage = scene.add
+    .image(0, 0, profileKey)
+    .setDisplaySize(size, size);
 
   const maskShape = scene.add.graphics();
   maskShape.fillStyle(0xffffff);
   maskShape.setPosition(position.x, position.y);
-  maskShape.fillCircle(0, 0, 20);
+  maskShape.fillCircle(0, 0, size / 2);
   const mask = maskShape.createGeometryMask();
   profileImage.setMask(mask);
   maskShape.visible = false;
 
   const border = scene.add.graphics();
   border.lineStyle(3, 0x861d8f);
-  border.strokeCircle(0, 0, 20);
+  border.strokeCircle(0, 0, size / 2);
   container.add([profileImage, border]);
   scene.profileElements.push(container);
 }

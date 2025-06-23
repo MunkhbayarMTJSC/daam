@@ -1,4 +1,4 @@
-import Piece from '../model/piece.js';
+import Piece from '../../model/piece.js';
 
 export default class PieceManager {
   constructor(scene, board) {

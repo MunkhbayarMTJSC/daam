@@ -14,6 +14,7 @@ export default function GameController(socket, io, rooms) {
     }
     const players = room.getPlayerList();
     io.to(roomCode).emit('bothReadyImg', players);
+    io.to(roomCode).emit('setTurn', data.currentTurn);
     socket.emit('updateBoard', data);
   });
   // Game Reset

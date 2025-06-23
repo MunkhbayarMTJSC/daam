@@ -1,14 +1,11 @@
 import ReadyPopup from '../ui/ReadyPopup';
-import BoardManager from '../components/BoardManager.js';
-import PieceManager from '../components/PieceManager.js';
+import BoardManager from '../components/models/board-manager.js';
+import PieceManager from '../components/models/piece-manager.js';
 import GameController from '../utils/GameController.js';
 import ShowHighlighter from '../components/ShowHighlighter.js';
 import GameSocketHandlers from '../network/GameSocketHandlers';
 import RoomSocketHandlers from '../network/RoomSocketHandlers';
-import {
-  loadAndShowProfile,
-  circleProfileImg,
-} from '../components/ui/ShowProfile.js';
+import { PlayersInfo } from '../components/ingame/players-info.js';
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
@@ -56,6 +53,7 @@ export default class GameScene extends Phaser.Scene {
       this.pieceManager,
       this.currentTurn
     );
+
     this.gameController = new GameController(
       this,
       this.boardManager,
@@ -64,6 +62,7 @@ export default class GameScene extends Phaser.Scene {
       this.showHighligher,
       this.socket
     );
+
     this.boardManager.draw(width, height);
     this.boardManager.setPlayerColor(this.playerColor);
     if (this.isReconnect) {
@@ -90,6 +89,8 @@ export default class GameScene extends Phaser.Scene {
     homeBtn.setInteractive().on('pointerdown', () => {
       if (this.socket) {
         this.socket.emit('leaveRoom', this.roomCode);
+        this.socket.removeAllListeners();
+
         this.scene.start('MainLobby', this.socket);
       } else {
         console.warn('⚠ socket is undefined!');
@@ -97,41 +98,13 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.socket.off('bothReadyImg');
-    this.socket.on('bothReadyImg', (players) => {
-      const mySocketId = this.socket.id;
-      const selfPlayer = players.find((p) => p.socketId === mySocketId);
-      const opponentPlayer = players.find((p) => p.socketId !== mySocketId);
-      if (selfPlayer) {
-        const pos = {
-          x: width * 0.09,
-          y: height * 0.86,
-        };
-        circleProfileImg(this, selfPlayer.avatarUrl, pos);
-
-        this.add
-          .text(width * 0.24, height * 0.86, selfPlayer.username, {
-            fontSize: '10px',
-            color: '#ffffff',
-            fontFamily: 'MongolFont',
-          })
-          .setOrigin(0.5);
-      }
-      if (opponentPlayer) {
-        const pos = {
-          x: width * 0.9,
-          y: height * 0.2,
-        };
-        circleProfileImg(this, opponentPlayer.avatarUrl, pos);
-
-        this.add
-          .text(width * 0.75, height * 0.2, opponentPlayer.username, {
-            fontSize: '10px',
-            color: '#ffffff',
-            fontFamily: 'MongolFont',
-          })
-          .setOrigin(0.5);
-      }
+    this.socket.once('bothReadyImg', (players) => {
+      console.log('Bugd belen');
+      this.playersInfo = new PlayersInfo(this, players, this.playerColor);
+      const currentTurn = this.gameController.getCurrentTurn();
+      this.setTurn(currentTurn);
     });
+
     RoomSocketHandlers(this);
 
     GameSocketHandlers(
@@ -141,9 +114,8 @@ export default class GameScene extends Phaser.Scene {
       this.playerColor
     );
   }
-  restoreGameState(data) {
-    console.log('♻️ Reconnecting game state...', data);
 
+  restoreGameState(data) {
     this.currentTurn = data.currentTurn;
 
     this.pieceManager.clear();
@@ -159,5 +131,15 @@ export default class GameScene extends Phaser.Scene {
       data.currentTurn,
       data.movablePieces
     );
+  }
+
+  setTurn(currentTurn) {
+    if (currentTurn === this.playerColor) {
+      this.playersInfo.myTimer.reset();
+      this.playersInfo.opponentTimer.pause();
+    } else {
+      this.playersInfo.myTimer.pause();
+      this.playersInfo.opponentTimer.reset();
+    }
   }
 }

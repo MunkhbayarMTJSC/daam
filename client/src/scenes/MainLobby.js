@@ -2,12 +2,12 @@ import Phaser from 'phaser';
 
 import { getSocket, initSocket } from '../network/socketManager.js';
 import { showReconnectPopup } from '../ui/uiHelpers.js';
-import PlayerManager from '../components/PlayerManager.js';
+import PlayerManager from '../components/models/player-manager.js';
 import {
   headInfo,
   midInfo,
   bottomInfo,
-} from '../components/ui/mainLobbyButtons.js';
+} from '../components/ui/lobby-buttons.js';
 
 export default class MainLobby extends Phaser.Scene {
   constructor() {
@@ -54,46 +54,4 @@ export default class MainLobby extends Phaser.Scene {
   }
 
   update() {}
-
-  showMissionPopup() {
-    const { width, height } = this.scale;
-    // Popup background
-    const popupBg = this.add
-      .image(width / 2, height / 2, 'missionBg')
-      .setDisplaySize(width, height);
-
-    // Хаах товч
-    const closeBtn = this.add
-      .image(width * 0.88, height * 0.21, 'close')
-      .setScale(0.7)
-      .setInteractive({ useHandCursor: true });
-
-    // Хаах товч дарахад бүх popup элементүүдийг устгана
-    closeBtn.on('pointerdown', () => {
-      popupBg.destroy();
-      closeBtn.destroy();
-      missionTexts.forEach((text) => text.destroy());
-    });
-
-    // Daily миссонуудыг авч харуулах
-    let missionTexts = [];
-    this.socket.emit('get_missions', (missions) => {
-      const dailyMissions = missions.filter((m) => m.type === 'daily');
-
-      dailyMissions.forEach((mission, index) => {
-        const text = this.add
-          .text(
-            width * 0.3,
-            200 + index * 30,
-            `• ${mission.title} (${mission.goal})`,
-            {
-              fontSize: '16px',
-              color: '#000',
-            }
-          )
-          .setOrigin(0.5);
-        missionTexts.push(text);
-      });
-    });
-  }
 }

@@ -23,7 +23,7 @@ export default class FriendLobby extends Phaser.Scene {
       .image(width / 2, height / 2, 'bgFriend')
       .setDisplaySize(width, height);
     const button = this.add
-      .image(width * 0.08, height * 0.04, 'homeBtn')
+      .image(width * 0.15, height * 0.04, 'homeBtn')
       .setScale(0.4)
       .setOrigin(0.5);
     button.setInteractive().on('pointerdown', () => {

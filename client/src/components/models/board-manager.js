@@ -1,4 +1,4 @@
-import * as CONFIG from '../Config.js';
+import * as CONFIG from '../../Config.js';
 export default class BoardView {
   #scene;
   #tiles;
