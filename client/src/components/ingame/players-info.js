@@ -1,5 +1,6 @@
 import { circleProfileImg } from '../ui/load-and-show-profile';
 import CircularTimer from '../models/circle-timer';
+import { GameTimer } from '../models/game-timer';
 export class PlayersInfo {
   #scene;
   #socket;
@@ -32,6 +33,14 @@ export class PlayersInfo {
         x: width * 0.9,
         y: height * 0.2,
       });
+      this.#scene.add
+        .sprite(width * 0.9, height * 0.86, 'pieces', 1)
+        .setScale(0.5)
+        .setOrigin(0.5, 0.5);
+      this.#scene.add
+        .sprite(width * 0.09, height * 0.2, 'pieces', 3)
+        .setScale(0.5)
+        .setOrigin(0.5, 0.5);
     } else {
       this.#myTimer = this.selfPlayerInfo(selfPlayer, {
         x: width * 0.09,
@@ -41,6 +50,14 @@ export class PlayersInfo {
         x: width * 0.9,
         y: height * 0.2,
       });
+      this.#scene.add
+        .sprite(width * 0.9, height * 0.86, 'pieces', 3)
+        .setScale(0.5)
+        .setOrigin(0.5, 0.5);
+      this.#scene.add
+        .sprite(width * 0.09, height * 0.2, 'pieces', 1)
+        .setScale(0.5)
+        .setOrigin(0.5, 0.5);
     }
   }
   selfPlayerInfo(player, pos) {
@@ -51,12 +68,12 @@ export class PlayersInfo {
     border.lineStyle(3, 0x0cc841);
     border.strokeCircle(pos.x, pos.y, 20);
     this.#scene.add
-      .text(pos.x + 60, pos.y, player.username, {
+      .text(pos.x + 32, pos.y, player.username, {
         fontSize: '10px',
         color: '#ffffff',
         fontFamily: 'MongolFont',
       })
-      .setOrigin(0.5);
+      .setOrigin(0, 0.5);
 
     const timer = new CircularTimer(
       this.#scene,
@@ -68,7 +85,18 @@ export class PlayersInfo {
         console.log(`🟥 ${player.username}-ийн цаг дууслаа`);
       }
     );
-    return timer;
+    const gameTimer = new GameTimer(
+      this.#scene,
+      pos.x + 32,
+      pos.y + 15,
+      200,
+      5,
+      180000,
+      () => {
+        console.log('Game Time finish', player.username);
+      }
+    );
+    return { timer, gameTimer };
   }
   opponentPlayerInfo(player, pos) {
     if (!player) return;
@@ -78,12 +106,12 @@ export class PlayersInfo {
     border.lineStyle(3, 0xfa0b38);
     border.strokeCircle(pos.x, pos.y, 20);
     this.#scene.add
-      .text(pos.x - 80, pos.y, player.username, {
+      .text(pos.x - 32, pos.y, player.username, {
         fontSize: '10px',
         color: '#ffffff',
         fontFamily: 'MongolFont',
       })
-      .setOrigin(0.5);
+      .setOrigin(1, 0.5);
 
     const timer = new CircularTimer(
       this.#scene,
@@ -95,7 +123,18 @@ export class PlayersInfo {
         console.log(`🟥 ${player.username}-ийн цаг дууслаа`);
       }
     );
-    return timer;
+    const gameTimer = new GameTimer(
+      this.#scene,
+      pos.x - 232,
+      pos.y - 20,
+      200,
+      5,
+      180000,
+      () => {
+        console.log('Game Time finish', player.username);
+      }
+    );
+    return { timer, gameTimer };
   }
   get myTimer() {
     return this.#myTimer;

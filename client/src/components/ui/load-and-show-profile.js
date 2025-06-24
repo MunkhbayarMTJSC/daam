@@ -58,12 +58,13 @@ export function circleProfileImg(scene, avatarUrl, position, size) {
     scene.load.image(profileKey, avatarUrl);
 
     scene.load.once(`filecomplete-image-${profileKey}`, () => {
-      showCircleProfileImg(scene, position, profileKey);
+      const container = showCircleProfileImg(scene, position, size, profileKey);
     });
 
     scene.load.start();
+    return null;
   } else {
-    showCircleProfileImg(scene, savedPosition, size, profileKey);
+    return showCircleProfileImg(scene, savedPosition, size, profileKey);
   }
 }
 
@@ -90,6 +91,7 @@ function showCircleProfileImg(scene, position, size, profileKey) {
   border.strokeCircle(0, 0, size / 2);
   container.add([profileImage, border]);
   scene.profileElements.push(container);
+  return container;
 }
 
 function generateProfileKey(url) {

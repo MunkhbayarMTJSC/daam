@@ -1,4 +1,4 @@
-import ReadyPopup from '../ui/ReadyPopup';
+import ReadyPopup from '../components/models/ready-popup.js';
 import BoardManager from '../components/models/board-manager.js';
 import PieceManager from '../components/models/piece-manager.js';
 import GameController from '../utils/GameController.js';
@@ -79,11 +79,6 @@ export default class GameScene extends Phaser.Scene {
     }
 
     const homeBtn = this.add.image(width * 0.065, height * 0.03, 'homeBtn');
-    this.add.text(width * 0.4, height * 0.02, `Room Code: ${this.roomCode}`, {
-      fontSize: '20px',
-      color: '#ffffff',
-      fontFamily: 'MongolFont',
-    });
     homeBtn.setScale(0.35);
     homeBtn.setOrigin(0.5);
     homeBtn.setInteractive().on('pointerdown', () => {
@@ -101,6 +96,8 @@ export default class GameScene extends Phaser.Scene {
     this.socket.once('bothReadyImg', (players) => {
       console.log('Bugd belen');
       this.playersInfo = new PlayersInfo(this, players, this.playerColor);
+      this.playersInfo.myTimer.gameTimer.start();
+      this.playersInfo.opponentTimer.gameTimer.start();
       const currentTurn = this.gameController.getCurrentTurn();
       this.setTurn(currentTurn);
     });
@@ -135,11 +132,15 @@ export default class GameScene extends Phaser.Scene {
 
   setTurn(currentTurn) {
     if (currentTurn === this.playerColor) {
-      this.playersInfo.myTimer.reset();
-      this.playersInfo.opponentTimer.pause();
+      this.playersInfo.myTimer.timer.reset();
+      this.playersInfo.myTimer.gameTimer.unpause();
+      this.playersInfo.opponentTimer.timer.pause();
+      this.playersInfo.opponentTimer.gameTimer.pause();
     } else {
-      this.playersInfo.myTimer.pause();
-      this.playersInfo.opponentTimer.reset();
+      this.playersInfo.myTimer.timer.pause();
+      this.playersInfo.myTimer.gameTimer.pause();
+      this.playersInfo.opponentTimer.timer.reset();
+      this.playersInfo.opponentTimer.gameTimer.unpause();
     }
   }
 }

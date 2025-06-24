@@ -10,6 +10,11 @@ export default class PreloadScene extends Phaser.Scene {
       frameHeight: 96, // нэг дүрсний өндөр
     });
     this.load.image('bgFriend', '/assets/friends.png');
+    this.load.image('readyBg', '/assets/readyBg.png');
+    this.load.spritesheet('readyBtn', 'assets/readyBtn.png', {
+      frameWidth: 150,
+      frameHeight: 40,
+    });
     this.load.spritesheet('tabButtons', 'assets/tab_buttons.png', {
       frameWidth: 150,
       frameHeight: 79,

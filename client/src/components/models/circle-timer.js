@@ -12,7 +12,7 @@ export default class CircularTimer extends Phaser.GameObjects.Container {
 
     // Graphics
     this.fillGraphics = scene.add.graphics();
-    this.fillGraphics.setBlendMode(Phaser.BlendModes.ADD);
+    this.fillGraphics.setBlendMode(Phaser.BlendModes.NORMAL);
     this.add(this.fillGraphics);
 
     // Text
@@ -64,7 +64,7 @@ export default class CircularTimer extends Phaser.GameObjects.Container {
     this.fillGraphics.fillPath();
 
     // 3. ⏳ үлдсэн хугацааг тод өнгөөр давхар зурна
-    this.fillGraphics.fillStyle(0x304cc8, 0.7); // 100% opacity
+    this.fillGraphics.fillStyle(0x304cc8, 1); // 100% opacity
     this.fillGraphics.slice(
       0,
       0,
