@@ -18,28 +18,72 @@ export default function GameController(socket, io, rooms) {
     socket.emit('updateBoard', data);
   });
   // Game Reset
-  socket.on('requestReplay', (roomCode) => {
-    const room = rooms.getRoom(roomCode);
+  socket.on('requestReplay', (data) => {
+    const room = rooms.getRoom(data.roomCode);
     if (!room) {
       console.log('Error: Өрөө олдсонгүй!');
       return;
     }
 
-    room.resetGame(); // энэ функцийг GameRoom дотор заавал нэмээрэй
-
-    const data = {
+    const result = {
       pieces: room.gameLogic.pieceManager.pieces,
       currentTurn: room.currentTurn,
       movablePieces: room.gameLogic.currentMovablePieces,
       pieceMoved: false,
+      vsBot: data.vsBot,
     };
 
-    io.to(roomCode).emit('gameRestarted', data);
+    io.to(data.roomCode).emit('updateBoard', result);
     const players = room.getPlayerList();
-    io.to(roomCode).emit('bothReadyImg', players);
+    if (!data.vsBot) {
+      io.to(data.roomCode).emit('bothReadyImg', players);
+    }
   });
 
-  // Selection
+  socket.on('startGameWithBot', (roomCode) => {
+    let room = rooms.getRoom(roomCode);
+
+    // Хэрвээ байхгүй бол шинэ өрөө үүсгэнэ
+    if (!room) {
+      room = rooms.createRoom(
+        io,
+        socket,
+        {
+          userId: '',
+          username: 'You',
+          avatarUrl: '',
+        },
+        true,
+        'bot-room'
+      );
+      room.addBot();
+
+      room.gameLogic.startGame(); // 🎯 GameLogic-ийн start
+    }
+
+    if (room.vsBot && room.currentTurn === room.botColor) {
+      setTimeout(() => room.makeBotMove(), 500);
+    }
+
+    // 🎁 Клиент рүү мэдээлэл буцаах
+    const playerColor = room.getPlayerColor(socket);
+    console.log('object :>> ', playerColor);
+    const playerList = room.getPlayerList();
+    const gameState = {
+      players: playerList,
+      playerColor,
+      roomCode,
+      vsBot: true,
+      initialData: {
+        pieces: room.gameLogic.pieceManager.pieces,
+        currentTurn: room.currentTurn,
+        movablePieces: room.gameLogic.currentMovablePieces,
+        pieceMoved: false,
+      },
+    };
+    socket.emit('gameStartedWithBot', gameState);
+  });
+
   socket.on('selectedPiece', ({ roomCode, pieceId }) => {
     const room = rooms.getRoom(roomCode);
     const color = room.getPlayerColor(socket);

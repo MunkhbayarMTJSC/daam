@@ -19,11 +19,13 @@ export default class GameScene extends Phaser.Scene {
     this.playerColor = data.color;
     this.players = data.players;
     this.readyPlayers = {};
+    this.initialData = data.initialData;
     if (data.reconnectData) {
       this.playerColor = data.reconnectData.playerColor;
       this.isReconnect = true;
       this.reconnectData = data.reconnectData;
     }
+    this.vsBot = data.vsBot;
   }
   preload() {
     this.load.audio('moveSound', '/assets/audio/move.wav');
@@ -66,7 +68,14 @@ export default class GameScene extends Phaser.Scene {
     this.boardManager.draw(width, height);
     this.boardManager.setPlayerColor(this.playerColor);
     if (this.isReconnect) {
+      console.log('Recconnecting...');
       this.restoreGameState(this.reconnectData);
+    } else if (this.vsBot && this.initialData) {
+      this.gameController.showMovablePieces(
+        this.initialData.pieces,
+        this.initialData.currentTurn,
+        this.initialData.movablePieces
+      );
     } else {
       this.readyPopup = new ReadyPopup(
         this,
@@ -94,7 +103,6 @@ export default class GameScene extends Phaser.Scene {
 
     this.socket.off('bothReadyImg');
     this.socket.once('bothReadyImg', (players) => {
-      console.log('Bugd belen');
       this.playersInfo = new PlayersInfo(this, players, this.playerColor);
       this.playersInfo.myTimer.gameTimer.start();
       this.playersInfo.opponentTimer.gameTimer.start();

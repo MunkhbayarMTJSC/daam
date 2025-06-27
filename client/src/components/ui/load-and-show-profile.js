@@ -1,4 +1,4 @@
-export function loadAndShowProfile(scene, avatarUrl, level, position) {
+export async function loadAndShowProfile(scene, avatarUrl, level, position) {
   if (!scene.profileElements) scene.profileElements = [];
 
   const savedPosition = { ...position };
@@ -7,15 +7,21 @@ export function loadAndShowProfile(scene, avatarUrl, level, position) {
   const profileKey = generateProfileKey(avatarUrl);
 
   if (!scene.textures.exists(profileKey)) {
-    scene.load.image(profileKey, avatarUrl);
-
-    scene.load.once(`filecomplete-image-${profileKey}`, () => {
-      showProfileImage(scene, level, position, profileKey);
+    return new Promise((resolve) => {
+      scene.load.image(profileKey, avatarUrl);
+      scene.load.once(`filecomplete-image-${profileKey}`, () => {
+        const container = showProfileImage(
+          scene,
+          savedLevel,
+          savedPosition,
+          profileKey
+        );
+        resolve(container);
+      });
+      scene.load.start();
     });
-
-    scene.load.start();
   } else {
-    showProfileImage(scene, savedLevel, savedPosition, profileKey);
+    return showProfileImage(scene, savedLevel, savedPosition, profileKey);
   }
 }
 
@@ -46,6 +52,7 @@ function showProfileImage(scene, level, position, profileKey) {
   });
   container.add([profileImage, frame, levelText]);
   scene.profileElements.push(container);
+  return container;
 }
 export function circleProfileImg(scene, avatarUrl, position, size) {
   if (!scene.profileElements) scene.profileElements = [];

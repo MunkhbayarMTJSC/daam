@@ -17,8 +17,6 @@ export default class FriendLobby extends Phaser.Scene {
   create() {
     this.cameras.main.fadeIn(500);
     const { width, height } = this.scale;
-
-    // BG & Home Button
     this.add
       .image(width / 2, height / 2, 'bgFriend')
       .setDisplaySize(width, height);
@@ -34,13 +32,11 @@ export default class FriendLobby extends Phaser.Scene {
       }
     });
 
-    // Табыг үүсгэх
     const { createTab, joinTab, setTab } = createRoomTabs(this);
     this.createTab = createTab;
     this.joinTab = joinTab;
     this.setTab = setTab;
 
-    // Контент контейнерүүд
     this.createTabContent = this.add.container(0, 0).setVisible(true);
     this.joinTabContent = this.add.container(0, 0).setVisible(false);
 

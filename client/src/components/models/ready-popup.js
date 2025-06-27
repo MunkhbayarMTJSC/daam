@@ -54,6 +54,7 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
   }
 
   updatePlayerList(players) {
+    console.log('players', players, this.roomCode);
     Object.values(this.playerElements).forEach((el) => el.destroy());
     this.playerElements = {};
 

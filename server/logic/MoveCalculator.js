@@ -42,7 +42,7 @@ export class MoveCalculator {
       .sort()
       .join(',')}`;
     if (pathKeySet.has(positionKey)) {
-      return []; // 🔁 Цикл үүсэхээс сэргийлнэ
+      return [];
     }
     pathKeySet.add(positionKey);
 
@@ -59,7 +59,7 @@ export class MoveCalculator {
         if (occupant) {
           if (captured || occupant.color === piece.color) break;
 
-          if (visitedCaptures.has(occupant.id)) break; // ❌ Аль хэдийн идэгдсэн дайсан
+          if (visitedCaptures.has(occupant.id)) break;
 
           captured = occupant;
           row += dr;
@@ -75,7 +75,7 @@ export class MoveCalculator {
             const newVisited = new Set(visitedCaptures);
             newVisited.add(captureKey);
 
-            const newPathKeySet = new Set(pathKeySet); // 🔁 Clone path
+            const newPathKeySet = new Set(pathKeySet);
             const subChains = this.getCaptureChains(
               nextPiece,
               newVisited,

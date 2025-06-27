@@ -67,26 +67,6 @@ export default class ShowHighlighter {
     }
     return this.validMoveCircles;
   }
-
-  // 0: captured:
-  //   Array(1)
-  //   0: {id: '1-5-6-1750488842904-0.6643049859071635', row: 5, col: 4}
-  //   length: 1
-  // [[Prototype]]:
-  // Array(0)
-  // col: 3
-  // row: 6
-  // [[Prototype]]: Object
-  // 1: captured:
-  //   Array(1)
-  //   0: {id: '1-3-6-1750488842904-0.732874931008646', row: 5, col: 2}
-  //   length: 1
-  // [[Prototype]]:
-  // Array(0)
-  // col: 1 Идээд буусан
-  // row: 4 Идээд буусан
-  // [[Prototype]]: Object
-  // length: 2
   highlightMovePath(piece, moveChain) {
     if (!Array.isArray(moveChain) || moveChain.length === 0) return;
     const graphics = this.scene.add.graphics();

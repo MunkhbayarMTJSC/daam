@@ -1,6 +1,7 @@
 import { loadAndShowProfile } from './load-and-show-profile.js';
 import { Coins, Gems } from './coins-gems.js';
 import { showMission } from '../popups/show-mission.js';
+import Profile from '../popups/profile.js';
 export function headInfo(scene, data, width, height) {
   const position = {
     x: 44,
@@ -11,7 +12,19 @@ export function headInfo(scene, data, width, height) {
     data.playerObj.avatarUrl,
     data.playerObj.level,
     position
-  );
+  ).then((profile) => {
+    profile.setSize(50, 50);
+    profile.setInteractive(
+      new Phaser.Geom.Rectangle(0, 0, 50, 50),
+      Phaser.Geom.Rectangle.Contains
+    );
+    profile.on('pointerdown', () => {
+      console.log('CLicked :>> ');
+      const profileInfo = new Profile(scene, data);
+      profileInfo.setInteractive();
+    });
+  });
+
   const coins = new Coins(scene, data.playerObj.coins, {
     x: width * 0.32,
     y: height * 0.035,

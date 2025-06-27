@@ -36,8 +36,24 @@ async function recordGameResult(userId, won) {
   const player = await Player.findOne({ userId });
   if (!player) throw new Error('Player not found');
 
-  player.gamesPlayed++;
-  if (won) player.gamesWon++;
+  player.stats.gamesPlayed++;
+  if (won) {
+    player.stats.gamesWon++;
+    player.stats.winStreak++;
+    if (player.stats.winStreak > player.stats.winStreakMax) {
+      player.stats.winStreakMax = player.stats.winStreak;
+    }
+  } else {
+    player.stats.winStreak = 0;
+  }
+  const total = player.stats.gamesPlayed;
+  const wonGames = player.stats.gamesWon;
+  console.log('Checks', total, wonGames);
+  if (total !== 0) {
+    player.stats.winRate = Math.round((wonGames / total) * 100);
+  } else {
+    player.stats.winRate = 0;
+  }
   await player.save();
 
   return player;

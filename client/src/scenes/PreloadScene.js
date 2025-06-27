@@ -9,7 +9,9 @@ export default class PreloadScene extends Phaser.Scene {
       frameWidth: 96, // нэг дүрсний өргөн
       frameHeight: 96, // нэг дүрсний өндөр
     });
+    this.load.image('playBot', '/assets/playBot.png');
     this.load.image('bgFriend', '/assets/friends.png');
+    this.load.image('profile', '/assets/profile.png');
     this.load.image('readyBg', '/assets/readyBg.png');
     this.load.spritesheet('readyBtn', 'assets/readyBtn.png', {
       frameWidth: 150,

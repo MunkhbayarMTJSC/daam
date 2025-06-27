@@ -1,4 +1,5 @@
-import { updateCapturedDisplay, showGameEndPopup } from '../ui/uiHelpers.js';
+import GameEndPopup from '../components/models/game-end-popup.js';
+import { updateCapturedDisplay } from '../ui/uiHelpers.js';
 export default function GameSocketHandlers(
   scene,
   currentTurn,
@@ -12,10 +13,11 @@ export default function GameSocketHandlers(
     scene.socket.off('gameRestarted');
   }
 
-  // ✅ Шинэ listener-үүдийг нэм
   scene.socket.on('updateBoard', (data) => {
     currentTurn = data.currentTurn;
-    scene.setTurn(currentTurn);
+    if (!data.vsBot) {
+      scene.setTurn(currentTurn);
+    }
     gameController.showMovablePieces(
       data.pieces,
       data.currentTurn,
@@ -75,8 +77,15 @@ export default function GameSocketHandlers(
   });
 
   scene.socket.on('gameEnded', (data) => {
-    console.log('🎮 Game ended:', data);
-    showGameEndPopup(scene, data);
+    console.log('object :>> ', data);
+    const myId = scene.socket.id;
+    const winnerSocketId = data.players[data.winner].socketId;
+
+    if (myId === winnerSocketId) {
+      scene.socket.emit('reportGameEnd', data.players[data.winner].userId);
+    }
+
+    scene.gameEndPopup = new GameEndPopup(scene, data);
   });
 
   scene.socket.on('errorMessage', (msg) => {

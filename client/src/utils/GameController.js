@@ -23,16 +23,16 @@ export default class GameController {
       this.showHighlighter.clearMovePathHighlight();
     });
     socket.on('highlightMovePath', (data) => {
+      this.showHighlighter.clearMovePathHighlight();
       this.showHighlighter.highlightMovePath(data.piece, data.moveChain);
       this.animateMove(data.piece, data.moveChain);
     });
   }
   showMovablePieces(piecesArray, currentTurn, movablePieces) {
     this.setCurrentTurn(currentTurn);
-    // 🧹 Эхлээд бүх sprite-үүдийн interactive-г устгах
     for (const sprite of this.pieceManager.pieces.values()) {
       sprite.disableInteractive();
-      sprite.removeAllListeners(); // pointerdown-ууд давхардахаас сэргийлнэ
+      sprite.removeAllListeners();
     }
 
     this.pieceManager.updatePieces(piecesArray);
@@ -53,8 +53,7 @@ export default class GameController {
 
       const isMyPiece = piece.color === this.playerColor;
       const isMovable = movablePieceIds.has(piece.id);
-
-      // Зөвхөн өөрийн ээлж, өөрийн хүү дээр интерактив идэвхжүүлнэ
+      console.log(piece.color, this.playerColor, isMovable);
       if (isMyTurn && isMyPiece && isMovable) {
         sprite.setInteractive();
         sprite.on('pointerdown', () => {

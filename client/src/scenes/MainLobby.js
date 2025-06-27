@@ -50,6 +50,25 @@ export default class MainLobby extends Phaser.Scene {
     }
     headInfo(this, data, width, height);
     midInfo(this, data, width, height);
+    const playVsBotBtn = this.add
+      .image(width * 0.8, height * 0.55, 'playBot')
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    playVsBotBtn.on('pointerdown', () => {
+      this.socket.emit('startGameWithBot', 'bot-room');
+    });
+    this.socket.on('gameStartedWithBot', (data) => {
+      this.scene.start('GameScene', {
+        socket: this.socket,
+        players: data.players,
+        color: data.playerColor,
+        roomCode: data.roomCode,
+        initialData: data.initialData,
+        vsBot: data.vsBot,
+      });
+    });
+
     bottomInfo(this, data, width, height);
   }
 

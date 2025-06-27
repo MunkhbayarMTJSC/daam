@@ -55,6 +55,7 @@ export default class GameLogic {
       this.updateMovablePieces(currentTurn);
       return true;
     }
+
     this.resetSelection();
     this.checkAndEndTurn(currentTurn);
     return false;

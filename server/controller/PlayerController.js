@@ -68,8 +68,8 @@ export default function handlePlayerSocket(socket, io, rooms) {
       console.error('XP add error:', err);
     }
   });
-
-  socket.on('gameEnded', async ({ roomCode, winnerId }) => {
+  socket.removeAllListeners('reportGameEnd');
+  socket.on('reportGameEnd', async (winnerId) => {
     try {
       const won = socket.player.userId === winnerId;
       const updated = await recordGameResult(socket.player.userId, won);
@@ -84,7 +84,7 @@ export default function handlePlayerSocket(socket, io, rooms) {
     if (!room) {
       return callback({ players: [] });
     }
-    const players = room.players.map((socketId) => {
+    const players = room.playerManager.players.map((socketId) => {
       const playerSocket = io.sockets.sockets.get(socketId);
       return {
         socketId, // 🟢 socketId-г нэмэх
