@@ -48,7 +48,6 @@ async function recordGameResult(userId, won) {
   }
   const total = player.stats.gamesPlayed;
   const wonGames = player.stats.gamesWon;
-  console.log('Checks', total, wonGames);
   if (total !== 0) {
     player.stats.winRate = Math.round((wonGames / total) * 100);
   } else {

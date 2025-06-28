@@ -43,11 +43,6 @@ export default function handlePlayerSocket(socket, io, rooms) {
         console.log('✅ New socket connected:', socket.id);
         socket.emit('reconnectSuccess', saveData);
 
-        // // 👥 Нөгөө тоглогчид: "playerReconnected"
-        // room.broadcastExcept(socket.id, 'playerReconnected', {
-        //   username: player.username,
-        // });
-
         return;
       }
     } catch (err) {
