@@ -20,10 +20,15 @@ export default function createCreateRoomUI(scene, container, data) {
     .setScale(0.7)
     .setInteractive({ useHandCursor: true });
   createBtn.on('pointerdown', () =>
-    scene.socket.emit('createRoom', {
-      userId: data.playerObj.userId,
-      username: data.playerObj.username,
-      avatarUrl: data.playerObj.avatarUrl,
+    scene.socket.emit('createRoom', { vsBot: false }, (res) => {
+      if (res.success) {
+        scene.scene.start('GameScene', {
+          roomCode: res.roomCode,
+          username: res.player.username,
+          color: res.playerColor,
+          players: [res.player],
+        });
+      }
     })
   );
   container.add(createBtn);

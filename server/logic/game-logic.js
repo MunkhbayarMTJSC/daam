@@ -1,6 +1,6 @@
-import { PiecesManager } from '../model/PiecesManager.js';
-import { MoveCalculator } from './MoveCalculator.js';
-import { GameRules } from './GameRules.js';
+import { PiecesManager } from '../game/piece-manager.js';
+import { MoveCalculator } from './move-calculator.js';
+import { GameRules } from './game-rule.js';
 
 export default class GameLogic {
   constructor(board, onGameOver) {

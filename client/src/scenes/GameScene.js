@@ -1,18 +1,18 @@
-import ReadyPopup from '../components/models/ready-popup.js';
+import ReadyPopup from '../components/popups/ready-popup.js';
 import BoardManager from '../components/models/board-manager.js';
 import PieceManager from '../components/models/piece-manager.js';
 import GameController from '../utils/GameController.js';
 import ShowHighlighter from '../components/ShowHighlighter.js';
-import GameSocketHandlers from '../network/GameSocketHandlers';
-import RoomSocketHandlers from '../network/RoomSocketHandlers';
+import GameSocketHandlers from '../network/game-socket-handlers.js';
 import { PlayersInfo } from '../components/ingame/players-info.js';
+import { getSocket } from '../network/socketManager.js';
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
   }
 
   init(data) {
-    this.socket = data.socket;
+    this.socket = getSocket();
     this.roomCode = data.roomCode;
     this.socketId = data.socketId;
     this.username = data.username;
@@ -67,6 +67,12 @@ export default class GameScene extends Phaser.Scene {
 
     this.boardManager.draw(width, height);
     this.boardManager.setPlayerColor(this.playerColor);
+    GameSocketHandlers(
+      this,
+      this.currentTurn,
+      this.gameController,
+      this.playerColor
+    );
     if (this.isReconnect) {
       console.log('Recconnecting...');
       this.restoreGameState(this.reconnectData);
@@ -77,14 +83,16 @@ export default class GameScene extends Phaser.Scene {
         this.initialData.movablePieces
       );
     } else {
-      this.readyPopup = new ReadyPopup(
-        this,
-        width / 2,
-        height / 2,
-        this.socket,
-        this.roomCode,
-        this.players
-      );
+      this.showReadyPopup = (players) => {
+        this.readyPopup = new ReadyPopup(
+          this,
+          width / 2,
+          height / 2,
+          this.socket,
+          this.roomCode,
+          players
+        );
+      };
     }
 
     const homeBtn = this.add.image(width * 0.065, height * 0.03, 'homeBtn');
@@ -109,15 +117,6 @@ export default class GameScene extends Phaser.Scene {
       const currentTurn = this.gameController.getCurrentTurn();
       this.setTurn(currentTurn);
     });
-
-    RoomSocketHandlers(this);
-
-    GameSocketHandlers(
-      this,
-      this.currentTurn,
-      this.gameController,
-      this.playerColor
-    );
   }
 
   restoreGameState(data) {

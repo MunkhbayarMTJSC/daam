@@ -1,5 +1,7 @@
-import GameEndPopup from '../components/models/game-end-popup.js';
+import { Scene } from 'phaser';
+import GameEndPopup from '../components/popups/game-end-popup.js';
 import { updateCapturedDisplay } from '../ui/uiHelpers.js';
+import ReadyPopup from '../components/popups/ready-popup.js';
 export default function GameSocketHandlers(
   scene,
   currentTurn,
@@ -11,7 +13,20 @@ export default function GameSocketHandlers(
     scene.socket.off('updateBoard');
     scene.socket.off('gameEnded');
     scene.socket.off('gameRestarted');
+    scene.socket.off('showGameReady');
   }
+  scene.socket.on('showGameReady', (data) => {
+    scene.showReadyPopup?.(data.players);
+  });
+
+  scene.socket.off('updateReadyStatus');
+  scene.socket.on('updateReadyStatus', (data) => {
+    scene.readyPopup?.updatePlayerList(data.players);
+  });
+
+  scene.socket.on('bothReady', () => {
+    scene.readyPopup?.startCountdown();
+  });
 
   scene.socket.on('updateBoard', (data) => {
     currentTurn = data.currentTurn;

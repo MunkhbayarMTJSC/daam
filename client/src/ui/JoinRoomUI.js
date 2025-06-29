@@ -76,11 +76,15 @@ export default function createJoinRoomUI(scene, container, data) {
     .setScale(0.7)
     .setInteractive({ useHandCursor: true });
   joinBtn.on('pointerdown', () => {
-    scene.socket.emit('joinRoom', {
-      roomCode: scene.roomCode,
-      userId: data.playerObj.userId,
-      username: data.playerObj.username,
-      avatarUrl: data.playerObj.avatarUrl,
+    scene.socket.emit('joinRoom', { roomCode: scene.roomCode }, (response) => {
+      if (response.success) {
+        scene.scene.start('GameScene', {
+          roomCode: response.roomCode,
+          username: response.player.username,
+          color: response.playerColor,
+          players: [response.player],
+        });
+      }
     });
   });
   container.add(joinBtn);

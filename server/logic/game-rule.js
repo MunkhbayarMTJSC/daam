@@ -5,7 +5,7 @@ export class GameRules {
   }
   isGameOver(color) {
     const movable = this.moveCalculator.getMovablePieces(color);
-    return movable.length !== 0;
+    return movable.length === 0;
   }
   mustCapture(color) {
     const movablePieces = this.moveCalculator.getMovablePieces(color);

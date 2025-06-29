@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
 
 import { getSocket, initSocket } from '../network/socketManager.js';
-import { showReconnectPopup } from '../ui/uiHelpers.js';
 import PlayerManager from '../components/models/player-manager.js';
 import {
   headInfo,
   midInfo,
   bottomInfo,
 } from '../components/ui/lobby-buttons.js';
+import RecconectPopup from '../components/popups/reconnect-popup.js';
 
 export default class MainLobby extends Phaser.Scene {
   constructor() {
@@ -46,7 +46,7 @@ export default class MainLobby extends Phaser.Scene {
     };
     if (this.reconnectRoomCode) {
       //Recconect popup
-      showReconnectPopup(this, this.socket, this.reconnectRoomCode, data);
+      const reconnectPopup = new RecconectPopup(this, data);
     }
     headInfo(this, data, width, height);
     midInfo(this, data, width, height);

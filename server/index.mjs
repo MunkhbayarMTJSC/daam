@@ -10,11 +10,11 @@ import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
-import PlayerController from './controller/PlayerController.js';
-import GameController from './controller/GameController.js';
-import MissionController from './controller/MissionController.js';
-import RoomController from './controller/RoomController.js';
-import RoomManager from './room/RoomManager.js';
+import playerController from './controller/player-controller.js';
+import GameController from './controller/game-controller.js';
+import MissionController from './controller/mission-controller.js';
+import roomController from './controller/room-controller.js';
+import RoomManager from './room/room-manager.js';
 
 // __dirname тохируулах
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +35,7 @@ const io = new Server(server, {
 });
 
 // ⬇️ Rooms хадгалах
-const rooms = new RoomManager();
+const rooms = new RoomManager(io);
 
 // ⬇️ Socket.IO логик (танай одоогийн логик энэ хэсэгт)
 // ⬇️ Server эхлүүлэх
@@ -55,10 +55,10 @@ io.on('connection', (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
 
   // 🆕 Тоглогчийн соккит
-  PlayerController(socket, io, rooms);
+  playerController(socket, io, rooms);
   MissionController(socket, io);
   // 🆕 Өрөөний соккит
   GameController(socket, io, rooms);
 
-  RoomController(socket, io, rooms);
+  roomController(socket, io, rooms);
 });

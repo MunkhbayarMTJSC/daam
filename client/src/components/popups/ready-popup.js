@@ -1,9 +1,7 @@
-import { circleProfileImg } from '../ui/load-and-show-profile.js';
 export default class ReadyPopup extends Phaser.GameObjects.Container {
   constructor(scene, x, y, socket, roomCode, players) {
     super(scene, x, y);
-
-    this.scene = scene;
+    console.log('Popup үүссэн', scene);
     this.socket = socket;
     this.roomCode = roomCode;
     this.players = players;
@@ -29,9 +27,9 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
       .setInteractive({ useHandCursor: true });
 
     this.readyBtn.on('pointerdown', () => {
-      this.readyBtn.setFrame(1);
+      this.isReady = !this.isReady;
+      this.readyBtn.setFrame(this.isReady ? 1 : 0);
       this.socket.emit('playerReady', { roomCode: this.roomCode });
-      this.readyBtn.disableInteractive();
     });
 
     this.add([this.bg, this.roomCodeText, this.readyBtn]);
@@ -41,23 +39,14 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
 
     this.updatePlayerList(this.players);
 
-    this.socket.off('updateReadyStatus');
-    this.socket.on('updateReadyStatus', ({ players }) => {
-      this.updatePlayerList(players);
-    });
-
-    this.socket.on('bothReady', () => {
-      this.startCountdown();
-    });
-
     scene.add.existing(this);
   }
 
   updatePlayerList(players) {
-    console.log('players', players, this.roomCode);
     Object.values(this.playerElements).forEach((el) => el.destroy());
+    if (this.scene === undefined) return;
     this.playerElements = {};
-
+    console.log('Datas ', players, this.scene);
     players.forEach((p, i) => {
       const container = this.scene.add.container();
       const nameText = this.scene.add
@@ -142,7 +131,7 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
 
         if (count === 0) {
           this.scene.time.delayedCall(500, () => {
-            this.destroy(); // Remove popup
+            this.destroy();
             this.socket.emit('startGame', this.roomCode);
           });
         }

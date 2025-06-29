@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import createRoomTabs from '../ui/RoomTabs.js';
 import createCreateRoomUI from '../ui/CreateRoomUI.js';
 import createJoinRoomUI from '../ui/JoinRoomUI.js';
-import RoomSocketHandlers from '../network/RoomSocketHandlers.js';
 
 export default class FriendLobby extends Phaser.Scene {
   constructor() {
@@ -48,8 +47,5 @@ export default class FriendLobby extends Phaser.Scene {
     this.roomCode = '';
     this.codeText = null;
     createJoinRoomUI(this, this.joinTabContent, this.data);
-
-    // Socket listener-ууд
-    RoomSocketHandlers(this);
   }
 }

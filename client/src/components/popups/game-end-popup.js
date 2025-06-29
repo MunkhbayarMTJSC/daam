@@ -1,3 +1,4 @@
+import ConfirmPopup from './confirm-popup';
 import ReadyPopup from './ready-popup';
 
 export default class GameEndPopup extends Phaser.GameObjects.Container {
@@ -71,6 +72,7 @@ export default class GameEndPopup extends Phaser.GameObjects.Container {
         vsBot,
       });
       this.destroy();
+      if (this.scene === undefined) return;
       this.scene.readyPopup = new ReadyPopup(
         this.scene,
         this.scene.scale.width / 2,
@@ -82,8 +84,11 @@ export default class GameEndPopup extends Phaser.GameObjects.Container {
     });
 
     backBtn.on('pointerdown', () => {
-      this.scene.socket.emit('leaveRoom', roomCode);
-      this.scene.scene.start('MainLobby', { socket: this.scene.socket });
+      new ConfirmPopup(this.scene, 'Та үнэхээр буцаж гарах уу?', () => {
+        this.scene.socket.emit('leaveRoom', { socketId: this.scene.socket.id });
+        this.scene.scene.start('MainLobby', { socket: this.scene.socket });
+        () => {};
+      });
     });
   }
 }
