@@ -31,6 +31,10 @@ export default class GameController {
   showMovablePieces(piecesArray, currentTurn, movablePieces) {
     this.setCurrentTurn(currentTurn);
     for (const sprite of this.pieceManager.pieces.values()) {
+      if (!sprite || !sprite.scene) {
+        continue;
+      }
+
       sprite.disableInteractive();
       sprite.removeAllListeners();
     }

@@ -1,7 +1,6 @@
 export default class ReadyPopup extends Phaser.GameObjects.Container {
   constructor(scene, x, y, socket, roomCode, players) {
     super(scene, x, y);
-    console.log('Popup үүссэн', scene);
     this.socket = socket;
     this.roomCode = roomCode;
     this.players = players;
@@ -46,7 +45,6 @@ export default class ReadyPopup extends Phaser.GameObjects.Container {
     Object.values(this.playerElements).forEach((el) => el.destroy());
     if (this.scene === undefined) return;
     this.playerElements = {};
-    console.log('Datas ', players, this.scene);
     players.forEach((p, i) => {
       const container = this.scene.add.container();
       const nameText = this.scene.add

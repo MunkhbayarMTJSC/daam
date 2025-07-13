@@ -56,16 +56,17 @@ export default class MainLobby extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     playVsBotBtn.on('pointerdown', () => {
-      this.socket.emit('startGameWithBot', 'bot-room');
-    });
-    this.socket.on('gameStartedWithBot', (data) => {
-      this.scene.start('GameScene', {
-        socket: this.socket,
-        players: data.players,
-        color: data.playerColor,
-        roomCode: data.roomCode,
-        initialData: data.initialData,
-        vsBot: data.vsBot,
+      this.socket.emit('createRoom', { vsBot: true }, (response) => {
+        if (response.success) {
+          this.scene.start('GameScene', {
+            roomCode: response.roomCode,
+            username: response.player.username,
+            color: response.playerColor,
+            players: [response.player],
+            vsBot: true,
+            initialData: response.initialData ?? null, // хэрэв шууд эхэлвэл
+          });
+        }
       });
     });
 

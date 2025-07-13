@@ -16,17 +16,15 @@ export default class GameScene extends Phaser.Scene {
     this.roomCode = data.roomCode;
     this.socketId = data.socketId;
     this.username = data.username;
-    this.playerColor = data.color;
     this.players = data.players;
     this.readyPlayers = {};
     this.initialData = data.initialData;
-    if (data.reconnectData) {
-      this.playerColor = data.reconnectData.playerColor;
-      this.isReconnect = true;
-      this.reconnectData = data.reconnectData;
-    }
     this.vsBot = data.vsBot;
+    this.isReconnect = !!data.reconnectData;
+    this.reconnectData = data.reconnectData || null;
+    this.playerColor = data.color;
   }
+
   preload() {
     this.load.audio('moveSound', '/assets/audio/move.wav');
     this.load.audio('captureSound', '/assets/audio/capture.wav');
@@ -37,6 +35,8 @@ export default class GameScene extends Phaser.Scene {
     if (bg && bg.isPlaying) {
       bg.stop();
     }
+    this.playersInfo = null;
+    const playersInfoRef = { current: null };
 
     this.moveSound = this.sound.add('moveSound');
     this.captureSound = this.sound.add('captureSound');
@@ -71,11 +71,17 @@ export default class GameScene extends Phaser.Scene {
       this,
       this.currentTurn,
       this.gameController,
-      this.playerColor
+      this.playerColor,
+      playersInfoRef
     );
     if (this.isReconnect) {
-      console.log('Recconnecting...');
+      this.playersInfo = new PlayersInfo(this, this.players, this.playerColor);
+      playersInfoRef.current = this.playersInfo;
+      this.playersInfo.myTimer.gameTimer.start();
+      this.playersInfo.opponentTimer.gameTimer.start();
       this.restoreGameState(this.reconnectData);
+      const currentTurn = this.gameController.getCurrentTurn();
+      this.setTurn(currentTurn);
     } else if (this.vsBot && this.initialData) {
       this.gameController.showMovablePieces(
         this.initialData.pieces,
@@ -112,11 +118,14 @@ export default class GameScene extends Phaser.Scene {
     this.socket.off('bothReadyImg');
     this.socket.once('bothReadyImg', (players) => {
       this.playersInfo = new PlayersInfo(this, players, this.playerColor);
+      playersInfoRef.current = this.playersInfo;
       this.playersInfo.myTimer.gameTimer.start();
       this.playersInfo.opponentTimer.gameTimer.start();
       const currentTurn = this.gameController.getCurrentTurn();
       this.setTurn(currentTurn);
     });
+    this.events.once('shutdown', this.cleanup, this);
+    this.events.once('destroy', this.cleanup, this);
   }
 
   restoreGameState(data) {
@@ -149,5 +158,26 @@ export default class GameScene extends Phaser.Scene {
       this.playersInfo.opponentTimer.timer.reset();
       this.playersInfo.opponentTimer.gameTimer.unpause();
     }
+  }
+  cleanup() {
+    // ✅ playersInfo устгах
+    if (this.playersInfo) {
+      this.playersInfo.destroy(); // доор тайлбарлана
+      this.playersInfo = null;
+    }
+
+    // ✅ socket listener-үүдийг арилгах
+    if (this.socket) {
+      this.socket.removeAllListeners(); // бүх listener цэвэрлэх
+    }
+
+    // ✅ sound устгах
+    if (this.moveSound) this.moveSound.destroy();
+    if (this.captureSound) this.captureSound.destroy();
+
+    // ✅ өөр custom graphics, sprite устгах
+    this.boardManager?.destroy?.();
+    this.pieceManager?.destroy?.();
+    this.readyPopup?.destroy?.();
   }
 }

@@ -15,17 +15,10 @@ export class GameRules {
     );
   }
   getWinner() {
-    const whiteAlive = this.pieceManager.getAllByColor(1);
-    const blackAlive = this.pieceManager.getAllByColor(0);
-    const whiteCanMove = whiteAlive.some(
-      (p) => this.moveCalculator.getValidMoves(p).length > 0
-    );
-    const blackCanMove = blackAlive.some(
-      (p) => this.moveCalculator.getValidMoves(p).length > 0
-    );
-    if (!whiteAlive.length || !whiteCanMove) return 0; // Black wins
-    if (!blackAlive.length || !blackCanMove) return 1; // White wins
-    return null;
+    const pieces = this.getRemainingPieces();
+    if (pieces.white > pieces.black) return 1;
+    if (pieces.black > pieces.white) return 0;
+    return -1;
   }
   getRemainingPieces() {
     return {

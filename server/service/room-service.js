@@ -49,7 +49,9 @@ export default class RoomService {
     const room = this.roomsManager.findRoomByUserId(userId);
     if (room) {
       room.pm.removePlayerCompletely(userId);
-      if (room.pm.players.length === 0) {
+      const players = room.pm.getPlayers();
+      this.io.to(room.roomCode).emit('updateReadyStatus', { players });
+      if (room.pm.players.length === 0 || room.vsBot) {
         this.roomsManager.deleteRoom(room.roomCode);
         console.log(`🗑️ Өрөө ${room.roomCode} хоосорсон тул устгагдлаа`);
       }

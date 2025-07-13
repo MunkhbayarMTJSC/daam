@@ -8,6 +8,10 @@ export class PlayersInfo {
   #playerColor;
   #myTimer;
   #opponentTimer;
+  #capturedText = {
+    my: null,
+    opponent: null,
+  };
   constructor(scene, players, playerColor) {
     this.#scene = scene;
     this.#players = players;
@@ -23,6 +27,24 @@ export class PlayersInfo {
     const mySocketId = this.#scene.socket.id;
     const selfPlayer = this.#players.find((p) => p.socketId === mySocketId);
     const opponentPlayer = this.#players.find((p) => p.socketId !== mySocketId);
+
+    this.#capturedText.my = this.#scene.add
+      .text(width * 0.85, height * 0.86, '0', {
+        fontSize: '40px',
+        color: '#ffffff',
+        fontFamily: 'MongolFont',
+      })
+      .setOrigin(1, 0.5);
+
+    // Opponent captured text
+    this.#capturedText.opponent = this.#scene.add
+      .text(width * 0.15, height * 0.2, '0', {
+        fontSize: '40px',
+        color: '#ffffff',
+        fontFamily: 'MongolFont',
+      })
+      .setOrigin(0, 0.5);
+
     if (this.#playerColor === 1) {
       // Улаан бол доор байрлана
       this.#myTimer = this.selfPlayerInfo(selfPlayer, {
@@ -80,7 +102,7 @@ export class PlayersInfo {
       pos.x,
       pos.y,
       20,
-      60000,
+      300000,
       () => {
         console.log(`🟥 ${player.username}-ийн цаг дууслаа`);
       }
@@ -91,7 +113,7 @@ export class PlayersInfo {
       pos.y + 15,
       200,
       5,
-      180000,
+      3600000,
       () => {
         console.log('Game Time finish', player.username);
       }
@@ -118,7 +140,7 @@ export class PlayersInfo {
       pos.x,
       pos.y,
       20,
-      60000,
+      300000,
       () => {
         console.log(`🟥 ${player.username}-ийн цаг дууслаа`);
       }
@@ -129,17 +151,33 @@ export class PlayersInfo {
       pos.y - 20,
       200,
       5,
-      180000,
+      3600000,
       () => {
         console.log('Game Time finish', player.username);
       }
     );
     return { timer, gameTimer };
   }
+
   get myTimer() {
     return this.#myTimer;
   }
   get opponentTimer() {
     return this.#opponentTimer;
+  }
+  updateCaptured(myCaptured, opponentCaptured) {
+    this.#capturedText.my?.setText(myCaptured);
+    this.#capturedText.opponent?.setText(opponentCaptured);
+  }
+  destroy() {
+    this.#myTimer?.timer?.destroy?.();
+    this.#myTimer?.gameTimer?.destroy?.();
+
+    this.#opponentTimer?.timer?.destroy?.();
+    this.#opponentTimer?.gameTimer?.destroy?.();
+    this.#scene.capturedText?.my?.destroy?.();
+    this.#scene.capturedText?.opponent?.destroy?.();
+    this.#scene.capturedText = null;
+    this.#scene = null;
   }
 }

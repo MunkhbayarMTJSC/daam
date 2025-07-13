@@ -21,9 +21,6 @@ export default class MoveHanlder {
     const isCapture = matchedChain.some((step) => step.captured);
 
     let chaining = false;
-    this.timeManager.clearTurnTimer(); // өмнөх тоглогчийн turn timer-г зогсооно
-    this.timeManager.switchTurn(); // ээлж солино
-    this.timeManager.startTurnTimer(this.gameState.currentTurn); // шинэ turn эхлэнэ
 
     if (isCapture) {
       chaining = this.gameLogic.moveCapture(
@@ -45,8 +42,12 @@ export default class MoveHanlder {
       isCapture,
       turn: this.gameState.currentTurn,
     });
+    this.timeManager.updateTimeAfterMove(this.gameState.currentTurn);
 
-    if (!chaining) this.gameState.currentTurn = 1 - this.gameState.currentTurn;
+    if (!chaining) {
+      this.gameState.currentTurn = 1 - this.gameState.currentTurn;
+      this.timeManager.startPlayerClock(this.gameState.currentTurn);
+    }
 
     const movablePieces = this.gameLogic.updateMovablePieces(
       this.gameState.currentTurn

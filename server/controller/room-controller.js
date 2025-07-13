@@ -50,21 +50,22 @@ export default function roomController(socket, io, roomsManager) {
   });
 
   // ✅ RECONNECT
-  socket.on('reconnectPlayer', ({ userId }) => {
+  socket.on('reconnectPlayer', ({ userId }, callback) => {
     const room = service.reconnectPlayer(userId, socket);
     if (room) {
       const playerColor = room.pm.getColorByUserId(userId);
+      const player = room.pm.getPlayer(socket.id); // Хэрэглэгчийн мэдээлэл
 
-      socket.emit('reconnectSuccess', {
+      callback?.({
+        success: true,
         roomCode: room.roomCode,
-        username: socket.player?.username,
+        username: player.username,
         playerColor,
         players: room.pm.getPlayers(),
+        reconnectData: room.getSaveData?.(), // Хэрвээ тоглоомын өгөгдөл сэргээх бол
       });
-
-      console.log(`♻️ Reconnected to room ${room.roomCode}`);
     } else {
-      socket.emit('reconnectFailed');
+      callback?.({ success: false, error: 'Room not found or expired.' });
     }
   });
 }

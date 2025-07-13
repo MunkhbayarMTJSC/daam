@@ -10,24 +10,11 @@ export default class GameRoom {
     this.roomCode = roomCode;
     this.io = io;
     this.vsBot = vsBot;
-    this.pm = new PlayerManager(this.roomCode);
+    this.pm = new PlayerManager(this.roomCode, this.io);
     this.tm = new TimerManager(this);
     this.gs = new GameState(this.roomCode, this.pm.players, this.vsBot);
     this.gl = new GameLogic(this.gs.board, (winner) => {
-      this.gs.winner = winner;
-      this.gs.gameEndedAt = Date.now();
-      const duration = Date.now() - this.gs.gameStartedAt;
-      this.tm.clearAllTimers();
-      const formattedDuration = this.gs.formatDuration(duration);
-      this.io.to(this.roomCode).emit('gameEnded', {
-        winner,
-        formatetDuration: formattedDuration,
-        moveCount: this.gs.moveHistory.length,
-        playerColors: this.pm.playerColors,
-        roomCode: this.roomCode,
-        vsBot: this.vsBot,
-        players: this.pm.players,
-      });
+      this.endGame(winner);
     });
     this.mh = new MoveHanlder(this.gl, this.gs, this.tm);
     this.bm = new BotManager(this.gl, this.mh, this.gs, this.io, this.roomCode);
@@ -35,8 +22,28 @@ export default class GameRoom {
   startGame() {
     this.gl.startGame();
     this.gs.gameStartedAt = Date.now();
-    this.tm.startGameTimer();
-    this.tm.startTurnTimer(this.gs.currentTurn);
+    this.tm.startPlayerClock(this.gs.currentTurn);
+    if (this.bm.isBotTurn()) {
+      setTimeout(() => {
+        this.bm.makeMove();
+      }, 1000);
+    }
+  }
+  endGame(winner) {
+    this.gs.winner = winner;
+    this.gs.gameEndedAt = Date.now();
+    const duration = Date.now() - this.gs.gameStartedAt;
+    this.tm.clearAll();
+    const formattedDuration = this.gs.formatDuration(duration);
+    this.io.to(this.roomCode).emit('gameEnded', {
+      winner,
+      formatetDuration: formattedDuration,
+      moveCount: this.gs.moveHistory.length,
+      playerColors: this.pm.playerColors,
+      roomCode: this.roomCode,
+      vsBot: this.vsBot,
+      players: this.pm.players,
+    });
   }
 
   resetForReplay() {
@@ -47,8 +54,6 @@ export default class GameRoom {
 
   getSaveData() {
     return {
-      roomCode: this.gs.roomCode,
-      players: this.pm.players.map(({ socketId, ...rest }) => rest),
       colors: this.pm.playerColors,
       currentTurn: this.gs.currentTurn,
       pieces: this.gl.pieceManager.serialize(),
@@ -57,6 +62,8 @@ export default class GameRoom {
       winner: this.gs.winner,
       gameStartedAt: this.gs.gameStartedAt,
       board: this.gs.board.serialize(),
+      vsBot: this.vsBot,
+      botColor: this.gs.botColor,
     };
   }
 
@@ -64,7 +71,7 @@ export default class GameRoom {
     this.gs.roomCode = data.roomCode;
     this.pm.players = data.players.map((p) => ({
       ...p,
-      socketId: null, // 🔁 reconnect үед шинэчилнэ
+      socketId: null,
     }));
 
     this.pm.playerColors = data.playerColors;
@@ -76,7 +83,7 @@ export default class GameRoom {
 
     this.gs.board = new Board();
     this.gs.board.deserialize(data.board);
-
+    this.tm.clearAll();
     this.gl = new GameLogic(this.gs.board, (winner) => {
       this.gs.winner = winner;
       this.gs.gameEndedAt = Date.now();

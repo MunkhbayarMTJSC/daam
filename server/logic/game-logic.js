@@ -79,7 +79,7 @@ export default class GameLogic {
   getGameState() {
     return {
       board: this.board,
-      pieces: this.pieceManager.getAllPieces(), // assume you have getAllPieces()
+      pieces: this.pieceManager.getAllPieces(),
       currentMovablePieces: this.currentMovablePieces,
       selectedPiece: this.selectedPiece,
       validMoves: this.validMoves,

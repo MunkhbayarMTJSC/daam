@@ -1,9 +1,10 @@
 export default class PlayerManager {
-  constructor(roomCode) {
+  constructor(roomCode, io) {
     this.players = [];
     this.playerColors = {};
     this.disconnectedAt = {};
     this.roomCode = roomCode;
+    this.io = io;
   }
   addPlayer(socket, { userId, username, avatarUrl }) {
     const socketId = socket.id;
@@ -70,6 +71,22 @@ export default class PlayerManager {
   }
   getPlayer(socketId) {
     return this.players.find((p) => p.socketId === socketId);
+  }
+
+  getPlayerByColor(color) {
+    const socketId = Object.keys(this.playerColors).find(
+      (id) => this.playerColors[id] === color
+    );
+    if (!socketId) return null;
+    return this.players.find((p) => p.socketId === socketId);
+  }
+
+  getSocketByPlayer(player) {
+    if (!player || !player.userId) return null;
+    for (const socket of this.io.sockets.sockets.values()) {
+      if (socket.player?.userId === player.userId) return socket;
+    }
+    return null;
   }
 
   getPlayers() {

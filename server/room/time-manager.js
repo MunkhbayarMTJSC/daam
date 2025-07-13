@@ -1,48 +1,77 @@
-// timer-manager.js
 export default class TimerManager {
   constructor(room, options = {}) {
     this.room = room;
-    this.turnTimeoutMs = options.turnTimeoutMs || 5 * 60 * 1000; // 5 минут
-    this.gameDurationMs = options.gameDurationMs || 60 * 60 * 1000; // 1 цаг
 
-    this.turnTimer = null;
-    this.gameTimer = null;
+    this.playerTimes = {
+      0: options.playerTimeMs || 60 * 60 * 1000, // 30 мин
+      1: options.playerTimeMs || 60 * 60 * 1000,
+    };
+
+    this.inactiveTimeoutMs = options.inactiveTimeoutMs || 5 * 60 * 1000;
+
+    this.activeColor = null; // аль тоглогчийн цаг явж байгаа вэ
+    this.lastMoveAt = null; // сүүлийн нүүдлийн timestamp
+    this.playerTimer = null; // тоглогчийн цаг (setTimeout)
+    this.inactiveTimer = null; // 5 мин inactivity timer
   }
 
-  startTurnTimer(currentPlayer) {
-    this.clearTurnTimer();
-    this.turnTimer = setTimeout(() => {
-      this.handleTurnTimeout(currentPlayer);
-    }, this.turnTimeoutMs);
+  /** Нэг тоглогчийн цагийг эхлүүлэх */
+  startPlayerClock(color) {
+    this.clearAllTimers();
+
+    this.activeColor = color;
+    this.lastMoveAt = Date.now();
+
+    // ⏱ Inactivity timer
+    this.inactiveTimer = setTimeout(() => {
+      this.handleInactiveTimeout(color);
+    }, this.inactiveTimeoutMs);
+
+    // 🕐 Player total time countdown
+    this.playerTimer = setTimeout(() => {
+      this.handlePlayerTimeout(color);
+    }, this.playerTimes[color]);
   }
 
-  clearTurnTimer() {
-    if (this.turnTimer) clearTimeout(this.turnTimer);
-    this.turnTimer = null;
-  }
+  /** Нүүсний дараа хугацаа хасах */
+  updateTimeAfterMove(prevColor) {
+    const now = Date.now();
+    const elapsed = now - this.lastMoveAt;
+    this.playerTimes[prevColor] -= elapsed;
 
-  handleTurnTimeout(player) {
-    const socket = this.room.pm.getSocketByPlayer(player);
-    if (socket) {
-      socket.emit('turnTimeout', '⏰ Цаг дууссан тул та хожигдлоо');
+    if (this.playerTimes[prevColor] <= 0) {
+      this.handlePlayerTimeout(prevColor);
     }
-    this.room.endGameDueToTimeout(player);
   }
 
-  startGameTimer() {
-    this.gameTimer = setTimeout(() => {
-      this.handleGameTimeOver();
-    }, this.gameDurationMs);
+  /** 5 мин нүүгээгүй үед дуусгах */
+  handleInactiveTimeout(color) {
+    const loser = this.room.pm.getPlayerByColor(color);
+    const socket = this.room.pm.getSocketByPlayer(loser);
+    const winner = 1 - color;
+
+    if (socket) {
+      socket.emit('turnTimeout', '⏰ Та 5 мин нүүхгүй байснаар ялагдлаа.');
+    }
+
+    this.room.endGame(winner);
   }
 
-  handleGameTimeOver() {
-    const winner = this.room.gl.getPlayerWithMostPieces();
-    this.room.forceEndGame(winner, '⏱ Тоглолтын цаг дууссан');
+  /** Тоглогчийн нийт цаг дууссан үед */
+  handlePlayerTimeout(color) {
+    const winner = 1 - color;
+    this.room.endGame(winner);
   }
 
+  clearAllTimers() {
+    if (this.playerTimer) clearTimeout(this.playerTimer);
+    if (this.inactiveTimer) clearTimeout(this.inactiveTimer);
+    this.playerTimer = null;
+    this.inactiveTimer = null;
+  }
+
+  /** Тоглоом дуусахад */
   clearAll() {
-    this.clearTurnTimer();
-    if (this.gameTimer) clearTimeout(this.gameTimer);
-    this.gameTimer = null;
+    this.clearAllTimers();
   }
 }

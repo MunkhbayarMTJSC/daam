@@ -1,12 +1,10 @@
-import { Scene } from 'phaser';
 import GameEndPopup from '../components/popups/game-end-popup.js';
-import { updateCapturedDisplay } from '../ui/uiHelpers.js';
-import ReadyPopup from '../components/popups/ready-popup.js';
 export default function GameSocketHandlers(
   scene,
   currentTurn,
   gameController,
-  playerColor
+  playerColor,
+  playersInfoRef
 ) {
   // 🎯 Эхлээд socket дээрх өмнөх listener-үүдийг цэвэрлэ
   if (scene.socket) {
@@ -58,7 +56,9 @@ export default function GameSocketHandlers(
       myCaptured = capturedCounts[1 - myColor];
       opponentCaptured = capturedCounts[myColor];
     }
-    updateCapturedDisplay(scene, myCaptured, opponentCaptured);
+    if (playersInfoRef.current) {
+      playersInfoRef.current.updateCaptured(myCaptured, opponentCaptured);
+    }
   });
 
   scene.socket.on('gameRestarted', (data) => {
@@ -88,16 +88,19 @@ export default function GameSocketHandlers(
       myCaptured = capturedCounts[1 - myColor];
       opponentCaptured = capturedCounts[myColor];
     }
-    updateCapturedDisplay(scene, myCaptured, opponentCaptured);
+    if (playersInfoRef.current) {
+      playersInfoRef.current.updateCaptured(myCaptured, opponentCaptured);
+    }
   });
 
   scene.socket.on('gameEnded', (data) => {
-    console.log('object :>> ', data);
-    const myId = scene.socket.id;
-    const winnerSocketId = data.players[data.winner].socketId;
+    if (!data.winner === -1) {
+      const myId = scene.socket.id;
+      const winnerSocketId = data.players[data.winner].socketId;
 
-    if (myId === winnerSocketId) {
-      scene.socket.emit('reportGameEnd', data.players[data.winner].userId);
+      if (myId === winnerSocketId) {
+        scene.socket.emit('reportGameEnd', data.players[data.winner].userId);
+      }
     }
 
     scene.gameEndPopup = new GameEndPopup(scene, data);

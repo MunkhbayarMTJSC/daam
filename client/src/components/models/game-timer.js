@@ -64,7 +64,6 @@ export class GameTimer {
   stop() {
     this.pause();
     this.bar.clear();
-    this.text.setText('');
   }
 
   update() {

@@ -9,10 +9,26 @@ export default class BotManager {
   }
 
   isBotTurn() {
-    return (
-      this.gameState.vsBot &&
-      this.gameState.currentTurn === this.gameState.botColor
-    );
+    return this.gameState.currentTurn === this.gameState.botColor;
+  }
+  evaluiteChain(chain) {
+    let score = 0;
+    for (const step of chain) {
+      if (step.captured) score += 10;
+    }
+    return score;
+  }
+  evaluiteMoves(piece, chains) {
+    let bestScore = -Infinity;
+    let bestChain = null;
+    for (const chain of chains) {
+      const score = this.evaluiteChain(chain);
+      if (score > bestScore) {
+        bestScore = score;
+        bestChain = chain;
+      }
+    }
+    return bestChain;
   }
 
   makeMove() {
@@ -21,19 +37,33 @@ export default class BotManager {
     );
     if (pieces.length === 0) return;
 
-    const piece = pieces[Math.floor(Math.random() * pieces.length)];
-    const chains = this.gameLogic.moveCalculator.getValidMoves(piece);
-    if (chains.length === 0) return;
+    let bestPiece = null;
+    let bestChain = null;
+    let bestScore = -Infinity;
 
-    const chain = chains[Math.floor(Math.random() * chains.length)];
-    const result = this.moveHandler.handleMove('bot', piece, chain);
+    for (const piece of pieces) {
+      const validChains = this.gameLogic.moveCalculator.getValidMoves(piece);
+      if (!validChains.length) continue;
+
+      const chosenChain = this.evaluiteMoves(piece, validChains);
+      const score = this.evaluiteChain(chosenChain);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestPiece = piece;
+        bestChain = chosenChain;
+      }
+    }
+
+    if (!bestPiece || !bestChain) return;
+
+    const result = this.moveHandler.handleMove('bot', bestPiece, bestChain);
+    this.io.to(this.roomCode).emit('highlightMovePath', {
+      piece: bestPiece,
+      moveChain: bestChain,
+    });
 
     if (!result.pieceMoved) return;
-
-    this.io.to(this.roomCode).emit('highlightMovePath', {
-      piece,
-      moveChain: chain,
-    });
 
     setTimeout(() => {
       this.io.to(this.roomCode).emit('clearHighlightMovePath');

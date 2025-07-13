@@ -53,20 +53,33 @@ export default class RecconectPopup extends Phaser.GameObjects.Container {
       .setInteractive();
     // Click listeners
     yesBtn.on('pointerdown', () => {
-      this.scene.socket.emit('joinRoom', {
-        roomCode,
-        userId: data.playerObj.userId,
-        username: data.playerObj.username,
-        avatarUrl: data.avatarUrl,
-        reconnecting: true,
-      });
-      this.destroy();
+      this.scene.socket.emit(
+        'reconnectPlayer',
+        { userId: this.playerObj.userId },
+        (response) => {
+          if (response.success) {
+            this.scene.scene.start('GameScene', {
+              roomCode: response.roomCode,
+              username: response.username,
+              color: response.playerColor,
+              players: response.players,
+              reconnectData: response.reconnectData, // Хэрвээ байгаа бол
+              isReconnect: true,
+            });
+            this.destroy();
+          } else {
+            alert(`❌ Reconnect амжилтгүй: ${response.error}`);
+            this.destroy();
+          }
+        }
+      );
     });
 
     noBtn.on('pointerdown', () => {
       this.scene.socket.emit('cancelConnect', {
         userId: this.playerObj.userId,
       });
+      this.list?.forEach((child) => child?.destroy?.());
       this.destroy();
     });
     this.add([blocker, bg, text, yesBtn, noBtn]);

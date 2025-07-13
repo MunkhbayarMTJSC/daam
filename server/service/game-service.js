@@ -62,7 +62,7 @@ export default class GameService {
     }
     this.io.to(roomCode).emit('highlightMovePath', { piece, moveChain });
     this.io.to(roomCode).emit('updateBoard', result);
-    if (!result.chaining && room.bm.isBotTurn()) {
+    if (room.bm.isBotTurn()) {
       setTimeout(() => room.bm.makeMove(), 500);
     }
   }
